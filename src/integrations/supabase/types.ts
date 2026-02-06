@@ -236,6 +236,8 @@ export type Database = {
           encontro_de_casais: boolean | null
           id: string
           is_active: boolean
+          is_discipulado: boolean | null
+          is_lider_em_treinamento: boolean | null
           joined_at: string
           profile_id: string
           renovo: boolean | null
@@ -248,6 +250,8 @@ export type Database = {
           encontro_de_casais?: boolean | null
           id?: string
           is_active?: boolean
+          is_discipulado?: boolean | null
+          is_lider_em_treinamento?: boolean | null
           joined_at?: string
           profile_id: string
           renovo?: boolean | null
@@ -260,6 +264,8 @@ export type Database = {
           encontro_de_casais?: boolean | null
           id?: string
           is_active?: boolean
+          is_discipulado?: boolean | null
+          is_lider_em_treinamento?: boolean | null
           joined_at?: string
           profile_id?: string
           renovo?: boolean | null

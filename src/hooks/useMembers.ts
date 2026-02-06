@@ -11,6 +11,8 @@ export type Member = Tables<'members'> & {
   renovo?: boolean;
   encontro_de_casais?: boolean;
   curso_lidere?: boolean;
+  is_discipulado?: boolean;
+  is_lider_em_treinamento?: boolean;
 };
 
 export function useMembers(celulaId?: string) {
@@ -22,6 +24,7 @@ export function useMembers(celulaId?: string) {
         .select(`
           id, profile_id, celula_id, is_active, joined_at,
           batismo, encontro_com_deus, renovo, encontro_de_casais, curso_lidere,
+          is_discipulado, is_lider_em_treinamento,
           profile:profiles!members_profile_id_fkey(id, name, avatar_url, email),
           celula:celulas!members_celula_id_fkey(id, name)
         `)
