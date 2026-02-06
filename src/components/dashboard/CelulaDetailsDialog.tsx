@@ -27,6 +27,8 @@ const MARCOS_ESPIRITUAIS = [
   { key: 'renovo', label: 'Renovo' },
   { key: 'encontro_de_casais', label: 'Encontro de Casais' },
   { key: 'curso_lidere', label: 'Curso Lidere' },
+  { key: 'is_discipulado', label: 'É Discipulado' },
+  { key: 'is_lider_em_treinamento', label: 'Líder em Treinamento' },
 ] as const;
 
 export function CelulaDetailsDialog({ open, onOpenChange, celulaId, celulaName }: CelulaDetailsDialogProps) {
@@ -80,6 +82,8 @@ export function CelulaDetailsDialog({ open, onOpenChange, celulaId, celulaName }
     if (member.renovo) count++;
     if (member.encontro_de_casais) count++;
     if (member.curso_lidere) count++;
+    if (member.is_discipulado) count++;
+    if (member.is_lider_em_treinamento) count++;
     return count;
   };
 
@@ -101,6 +105,8 @@ export function CelulaDetailsDialog({ open, onOpenChange, celulaId, celulaName }
     renovo: members?.filter(m => m.renovo).length || 0,
     encontro_de_casais: members?.filter(m => m.encontro_de_casais).length || 0,
     curso_lidere: members?.filter(m => m.curso_lidere).length || 0,
+    is_discipulado: members?.filter(m => m.is_discipulado).length || 0,
+    is_lider_em_treinamento: members?.filter(m => m.is_lider_em_treinamento).length || 0,
   };
 
   return (
@@ -225,7 +231,7 @@ export function CelulaDetailsDialog({ open, onOpenChange, celulaId, celulaName }
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <Badge variant="secondary">
-                                    {getMarcoCount(member)}/5 marcos
+                                    {getMarcoCount(member)}/7 marcos
                                   </Badge>
                                   {expandedMembers.has(member.id) ? (
                                     <ChevronUp className="h-4 w-4 text-muted-foreground" />

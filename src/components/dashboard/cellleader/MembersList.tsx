@@ -19,6 +19,8 @@ const MARCOS_ESPIRITUAIS = [
   { key: 'renovo', label: 'Renovo' },
   { key: 'encontro_de_casais', label: 'Encontro de Casais' },
   { key: 'curso_lidere', label: 'Curso Lidere' },
+  { key: 'is_discipulado', label: 'É Discipulado' },
+  { key: 'is_lider_em_treinamento', label: 'Líder em Treinamento' },
 ] as const;
 
 export function MembersList({ celulaId }: MembersListProps) {
@@ -60,6 +62,8 @@ export function MembersList({ celulaId }: MembersListProps) {
     if (member.renovo) count++;
     if (member.encontro_de_casais) count++;
     if (member.curso_lidere) count++;
+    if (member.is_discipulado) count++;
+    if (member.is_lider_em_treinamento) count++;
     return count;
   };
 
@@ -122,7 +126,7 @@ export function MembersList({ celulaId }: MembersListProps) {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge variant="secondary">
-                          {getMarcoCount(member)}/5 marcos
+                          {getMarcoCount(member)}/7 marcos
                         </Badge>
                         {expandedMembers.has(member.id) ? (
                           <ChevronUp className="h-4 w-4 text-muted-foreground" />
