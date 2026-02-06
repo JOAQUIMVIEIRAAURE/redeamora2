@@ -6,22 +6,26 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
-import { useWeeklyReportsByRede, getCurrentWeekStart, WeeklyReport } from '@/hooks/useWeeklyReports';
+import { useWeeklyReportsByRede, WeeklyReport } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
+import { WeekSelector, getWeekStartString } from './WeekSelector';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export function NetworkLeaderDashboard() {
   const { toast } = useToast();
   const { data: redes, isLoading: redesLoading } = useRedes();
   
   const [selectedRede, setSelectedRede] = useState<string>('');
-  const { data: redeData, isLoading: reportsLoading } = useWeeklyReportsByRede(selectedRede);
+  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+  const weekStart = getWeekStartString(selectedWeek);
   
-  const weekStart = getCurrentWeekStart();
+  const { data: redeData, isLoading: reportsLoading } = useWeeklyReportsByRede(selectedRede);
 
   // Show all redes in controlled environment
   const userRedes = redes || [];
 
-  // Filter reports for current week
+  // Filter reports for selected week
   const currentWeekReports = redeData?.reports?.filter(r => r.week_start === weekStart) || [];
 
   // Define type for coordenacao data
@@ -82,11 +86,10 @@ export function NetworkLeaderDashboard() {
     children: 0,
   });
 
-  const formatWeekDisplay = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 6);
-    return `${date.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
+  const formatWeekDisplay = () => {
+    const weekEnd = new Date(selectedWeek);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    return `${format(selectedWeek, "dd/MM/yyyy", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`;
   };
 
   const exportToCSV = () => {
@@ -147,7 +150,7 @@ export function NetworkLeaderDashboard() {
     ]);
 
     const csvContent = [
-      `Relatório da Rede - Semana ${formatWeekDisplay(weekStart)}`,
+      `Relatório da Rede - Semana ${formatWeekDisplay()}`,
       '',
       headers.join(','),
       ...rows.map(row => row.join(','))
@@ -183,17 +186,19 @@ export function NetworkLeaderDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Dashboard do Líder de Rede</h2>
-          <p className="text-muted-foreground">Semana: {formatWeekDisplay(weekStart)}</p>
         </div>
-        {selectedRede && currentWeekReports.length > 0 && (
-          <Button onClick={exportToCSV} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar para CSV
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
+          {selectedRede && currentWeekReports.length > 0 && (
+            <Button onClick={exportToCSV} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Exportar CSV
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>
@@ -244,7 +249,7 @@ export function NetworkLeaderDashboard() {
                 Dados por Coordenação
               </CardTitle>
               <CardDescription>
-                {Object.keys(reportsByCoordenacao).length} coordenação(ões) com relatórios esta semana
+                {Object.keys(reportsByCoordenacao).length} coordenação(ões) com relatórios nesta semana
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -309,7 +314,7 @@ export function NetworkLeaderDashboard() {
                 </Table>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  Nenhum relatório enviado esta semana
+                  Nenhum relatório enviado nesta semana
                 </div>
               )}
             </CardContent>
