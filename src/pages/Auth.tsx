@@ -23,13 +23,13 @@ export default function Auth() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
-      <Card className="w-full max-w-md">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-background to-accent px-4">
+      <Card className="w-full max-w-md border-primary/20 shadow-lg">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-2xl font-bold text-primary-foreground">
-            IG
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-3xl">
+            ❤️
           </div>
-          <CardTitle className="text-2xl">Igreja Gestão</CardTitle>
+          <CardTitle className="text-2xl text-primary">Rede Amor a 2</CardTitle>
           <CardDescription>
             Sistema de gestão de células e acompanhamento de membros
           </CardDescription>
@@ -37,7 +37,7 @@ export default function Auth() {
         <CardContent className="space-y-4">
           <Button 
             onClick={signInWithGoogle} 
-            className="w-full"
+            className="w-full bg-primary hover:bg-primary/90"
             size="lg"
           >
             <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">

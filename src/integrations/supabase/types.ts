@@ -338,6 +338,66 @@ export type Database = {
           },
         ]
       }
+      weekly_reports: {
+        Row: {
+          celula_id: string
+          children: number
+          created_at: string
+          created_by: string | null
+          discipleships: number
+          id: string
+          leaders_in_training: number
+          members_present: number
+          notes: string | null
+          updated_at: string
+          visitors: number
+          week_start: string
+        }
+        Insert: {
+          celula_id: string
+          children?: number
+          created_at?: string
+          created_by?: string | null
+          discipleships?: number
+          id?: string
+          leaders_in_training?: number
+          members_present?: number
+          notes?: string | null
+          updated_at?: string
+          visitors?: number
+          week_start: string
+        }
+        Update: {
+          celula_id?: string
+          children?: number
+          created_at?: string
+          created_by?: string | null
+          discipleships?: number
+          id?: string
+          leaders_in_training?: number
+          members_present?: number
+          notes?: string | null
+          updated_at?: string
+          visitors?: number
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reports_celula_id_fkey"
+            columns: ["celula_id"]
+            isOneToOne: false
+            referencedRelation: "celulas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_reports_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
