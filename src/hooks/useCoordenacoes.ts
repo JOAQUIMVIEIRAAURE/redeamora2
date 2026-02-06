@@ -1,0 +1,117 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
+import { useToast } from '@/hooks/use-toast';
+
+export type Coordenacao = Tables<'coordenacoes'> & {
+  leader?: { id: string; name: string; avatar_url: string | null } | null;
+  rede?: { id: string; name: string } | null;
+  _count?: { celulas: number };
+};
+
+export function useCoordenacoes() {
+  return useQuery({
+    queryKey: ['coordenacoes'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('coordenacoes')
+        .select(`
+          *,
+          leader:profiles!coordenacoes_leader_id_fkey(id, name, avatar_url),
+          rede:redes!coordenacoes_rede_id_fkey(id, name)
+        `)
+        .order('name');
+      
+      if (error) throw error;
+      
+      // Get celula counts
+      const { data: celulaCounts } = await supabase
+        .from('celulas')
+        .select('coordenacao_id');
+      
+      const countMap = celulaCounts?.reduce((acc, c) => {
+        acc[c.coordenacao_id] = (acc[c.coordenacao_id] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>) || {};
+      
+      return data.map(c => ({
+        ...c,
+        _count: { celulas: countMap[c.id] || 0 }
+      })) as Coordenacao[];
+    },
+  });
+}
+
+export function useCreateCoordenacao() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (coordenacao: TablesInsert<'coordenacoes'>) => {
+      const { data, error } = await supabase
+        .from('coordenacoes')
+        .insert(coordenacao)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coordenacoes'] });
+      toast({ title: 'Coordenação criada com sucesso!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao criar coordenação', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useUpdateCoordenacao() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, ...coordenacao }: TablesUpdate<'coordenacoes'> & { id: string }) => {
+      const { data, error } = await supabase
+        .from('coordenacoes')
+        .update(coordenacao)
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coordenacoes'] });
+      toast({ title: 'Coordenação atualizada com sucesso!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao atualizar coordenação', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useDeleteCoordenacao() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('coordenacoes')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['coordenacoes'] });
+      toast({ title: 'Coordenação excluída com sucesso!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao excluir coordenação', description: error.message, variant: 'destructive' });
+    },
+  });
+}
