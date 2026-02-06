@@ -96,8 +96,9 @@ export function CellLeaderDashboard() {
     return `${date.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
   };
 
-  // Filter celulas where user is leader
-  const userCelulas = celulas?.filter(c => c.leader?.id === profile?.id) || celulas || [];
+  // Filter celulas where user is leader - if none found, show all celulas
+  const filteredCelulas = celulas?.filter(c => c.leader?.id === profile?.id) || [];
+  const userCelulas = filteredCelulas.length > 0 ? filteredCelulas : (celulas || []);
 
   const statCards = [
     { icon: Users, label: 'Membros Presentes', key: 'members_present', color: 'text-primary' },
