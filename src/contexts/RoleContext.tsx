@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-type UserRole = 'admin' | 'rede_leader' | 'coordenador' | 'celula_leader';
+type UserRole = 'admin' | 'rede_leader' | 'coordenador' | 'supervisor' | 'celula_leader';
 
 interface RoleContextType {
   selectedRole: UserRole | null;
@@ -8,6 +8,7 @@ interface RoleContextType {
   isAdmin: boolean;
   isRedeLeader: boolean;
   isCoordenador: boolean;
+  isSupervisor: boolean;
   isCelulaLeader: boolean;
 }
 
@@ -22,6 +23,7 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     isAdmin: selectedRole === 'admin',
     isRedeLeader: selectedRole === 'rede_leader',
     isCoordenador: selectedRole === 'coordenador',
+    isSupervisor: selectedRole === 'supervisor',
     isCelulaLeader: selectedRole === 'celula_leader',
   };
 

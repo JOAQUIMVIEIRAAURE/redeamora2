@@ -4,9 +4,10 @@ import { CellLeaderDashboard } from '@/components/dashboard/CellLeaderDashboard'
 import { CoordinatorDashboard } from '@/components/dashboard/CoordinatorDashboard';
 import { NetworkLeaderDashboard } from '@/components/dashboard/NetworkLeaderDashboard';
 import { AdminDashboard } from '@/components/dashboard/AdminDashboard';
+import { SupervisorDashboard } from '@/components/dashboard/SupervisorDashboard';
 
 export default function Dashboard() {
-  const { isAdmin, isRedeLeader, isCoordenador } = useRole();
+  const { isAdmin, isRedeLeader, isCoordenador, isSupervisor } = useRole();
 
   // Render dashboard based on selected role
   const renderDashboard = () => {
@@ -18,6 +19,9 @@ export default function Dashboard() {
     }
     if (isCoordenador) {
       return <CoordinatorDashboard />;
+    }
+    if (isSupervisor) {
+      return <SupervisorDashboard />;
     }
     // Default to cell leader dashboard
     return <CellLeaderDashboard />;

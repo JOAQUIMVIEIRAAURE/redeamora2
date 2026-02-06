@@ -2,9 +2,9 @@ import { useNavigate } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Home as HomeIcon, FolderTree, Network, Shield } from 'lucide-react';
+import { Home as HomeIcon, FolderTree, Network, Shield, ClipboardCheck } from 'lucide-react';
 
-type RoleType = 'admin' | 'rede_leader' | 'coordenador' | 'celula_leader';
+type RoleType = 'admin' | 'rede_leader' | 'coordenador' | 'supervisor' | 'celula_leader';
 
 const roleOptions: Array<{
   role: RoleType;
@@ -21,6 +21,13 @@ const roleOptions: Array<{
     colorClass: 'bg-orange-500 hover:bg-orange-600',
   },
   {
+    role: 'supervisor',
+    title: 'Supervisor',
+    description: 'Registre supervisões de células, avalie o roteiro e acompanhe o desempenho das células.',
+    icon: ClipboardCheck,
+    colorClass: 'bg-purple-500 hover:bg-purple-600',
+  },
+  {
     role: 'coordenador',
     title: 'Coordenador',
     description: 'Visualize as células da sua coordenação, acompanhe métricas e gerencie líderes.',
@@ -32,7 +39,7 @@ const roleOptions: Array<{
     title: 'Líder de Rede',
     description: 'Acompanhe métricas consolidadas por coordenação e exporte dados da rede.',
     icon: Network,
-    colorClass: 'bg-blue-500 hover:bg-blue-600',
+    colorClass: 'bg-primary hover:bg-primary/90',
   },
   {
     role: 'admin',

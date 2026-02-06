@@ -6,20 +6,21 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Plus, X, Shield, Network, FolderTree, Home } from 'lucide-react';
+import { Loader2, Plus, X, Shield, Network, FolderTree, Home, ClipboardCheck } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
 const roleLabels: Record<AppRole, { label: string; icon: React.ReactNode; color: string }> = {
-  admin: { label: 'Admin', icon: <Shield className="h-3 w-3" />, color: 'bg-red-500 text-white' },
-  rede_leader: { label: 'Líder de Rede', icon: <Network className="h-3 w-3" />, color: 'bg-blue-500 text-white' },
-  coordenador: { label: 'Coordenador', icon: <FolderTree className="h-3 w-3" />, color: 'bg-green-500 text-white' },
-  celula_leader: { label: 'Líder de Célula', icon: <Home className="h-3 w-3" />, color: 'bg-orange-500 text-white' },
+  admin: { label: 'Admin', icon: <Shield className="h-3 w-3" />, color: 'bg-destructive text-destructive-foreground' },
+  rede_leader: { label: 'Líder de Rede', icon: <Network className="h-3 w-3" />, color: 'bg-primary text-primary-foreground' },
+  coordenador: { label: 'Coordenador', icon: <FolderTree className="h-3 w-3" />, color: 'bg-accent text-accent-foreground' },
+  supervisor: { label: 'Supervisor', icon: <ClipboardCheck className="h-3 w-3" />, color: 'bg-secondary text-secondary-foreground' },
+  celula_leader: { label: 'Líder de Célula', icon: <Home className="h-3 w-3" />, color: 'bg-muted text-muted-foreground' },
 };
 
-const allRoles: AppRole[] = ['admin', 'rede_leader', 'coordenador', 'celula_leader'];
+const allRoles: AppRole[] = ['admin', 'rede_leader', 'coordenador', 'supervisor', 'celula_leader'];
 
 export function UserRolesManager() {
   const { data: users, isLoading } = useUsersWithRoles();
