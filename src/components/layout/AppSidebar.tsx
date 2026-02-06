@@ -49,12 +49,12 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
-            IG
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold">
+            ❤️
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-sidebar-foreground">Igreja Gestão</span>
-            <span className="text-xs text-muted-foreground">Sistema de Células</span>
+            <span className="font-semibold text-sidebar-foreground">Rede Amor a 2</span>
+            <span className="text-xs text-sidebar-foreground/70">Sistema de Células</span>
           </div>
         </div>
       </SidebarHeader>
