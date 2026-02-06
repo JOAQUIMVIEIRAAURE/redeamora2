@@ -5,20 +5,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid } from 'lucide-react';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
-import { useWeeklyReportsByCoordenacao, getCurrentWeekStart } from '@/hooks/useWeeklyReports';
+import { useWeeklyReportsByCoordenacao } from '@/hooks/useWeeklyReports';
+import { WeekSelector, getWeekStartString } from './WeekSelector';
 
 export function CoordinatorDashboard() {
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
   
   const [selectedCoordenacao, setSelectedCoordenacao] = useState<string>('');
-  const { data: reports, isLoading: reportsLoading } = useWeeklyReportsByCoordenacao(selectedCoordenacao);
+  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+  const weekStart = getWeekStartString(selectedWeek);
   
-  const weekStart = getCurrentWeekStart();
+  const { data: reports, isLoading: reportsLoading } = useWeeklyReportsByCoordenacao(selectedCoordenacao);
 
   // Show all coordenacoes in controlled environment
   const userCoordenacoes = coordenacoes || [];
 
-  // Filter reports for current week
+  // Filter reports for selected week
   const currentWeekReports = reports?.filter(r => r.week_start === weekStart) || [];
 
   // Calculate totals
@@ -35,13 +37,6 @@ export function CoordinatorDashboard() {
     visitors: 0,
     children: 0,
   });
-
-  const formatWeekDisplay = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 6);
-    return `${date.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
-  };
 
   const statCards = [
     { icon: Users, label: 'Total Membros', value: totals.members_present },
@@ -61,11 +56,11 @@ export function CoordinatorDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Dashboard do Coordenador</h2>
-          <p className="text-muted-foreground">Semana: {formatWeekDisplay(weekStart)}</p>
         </div>
+        <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
       </div>
 
       <Card>
@@ -116,7 +111,7 @@ export function CoordinatorDashboard() {
                 Relatórios por Célula
               </CardTitle>
               <CardDescription>
-                {currentWeekReports.length} célula(s) enviaram relatório esta semana
+                {currentWeekReports.length} célula(s) enviaram relatório nesta semana
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -159,7 +154,7 @@ export function CoordinatorDashboard() {
                 </Table>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  Nenhum relatório enviado esta semana
+                  Nenhum relatório enviado nesta semana
                 </div>
               )}
             </CardContent>

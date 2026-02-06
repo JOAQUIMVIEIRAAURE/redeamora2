@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,8 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2 } from 'lucide-react';
 import { useCelulas } from '@/hooks/useCelulas';
-import { useWeeklyReports, useCreateWeeklyReport, getCurrentWeekStart } from '@/hooks/useWeeklyReports';
+import { useWeeklyReports, useCreateWeeklyReport } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
+import { WeekSelector, getWeekStartString } from './WeekSelector';
 
 export function CellLeaderDashboard() {
   const { toast } = useToast();
@@ -15,43 +16,49 @@ export function CellLeaderDashboard() {
   const createReport = useCreateWeeklyReport();
   
   const [selectedCelula, setSelectedCelula] = useState<string>('');
-  const weekStart = getCurrentWeekStart();
+  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+  const weekStart = getWeekStartString(selectedWeek);
   
   const { data: existingReports } = useWeeklyReports(selectedCelula);
   const existingReport = existingReports?.find(r => r.week_start === weekStart);
   
   const [formData, setFormData] = useState({
-    members_present: existingReport?.members_present || 0,
-    leaders_in_training: existingReport?.leaders_in_training || 0,
-    discipleships: existingReport?.discipleships || 0,
-    visitors: existingReport?.visitors || 0,
-    children: existingReport?.children || 0,
-    notes: existingReport?.notes || '',
+    members_present: 0,
+    leaders_in_training: 0,
+    discipleships: 0,
+    visitors: 0,
+    children: 0,
+    notes: '',
   });
 
-  // Update form when celula changes or existing report loads
+  // Update form when celula or week changes
+  useEffect(() => {
+    if (selectedCelula && existingReports) {
+      const report = existingReports.find(r => r.celula_id === selectedCelula && r.week_start === weekStart);
+      if (report) {
+        setFormData({
+          members_present: report.members_present,
+          leaders_in_training: report.leaders_in_training,
+          discipleships: report.discipleships,
+          visitors: report.visitors,
+          children: report.children,
+          notes: report.notes || '',
+        });
+      } else {
+        setFormData({
+          members_present: 0,
+          leaders_in_training: 0,
+          discipleships: 0,
+          visitors: 0,
+          children: 0,
+          notes: '',
+        });
+      }
+    }
+  }, [selectedCelula, weekStart, existingReports]);
+
   const handleCelulaChange = (celulaId: string) => {
     setSelectedCelula(celulaId);
-    const report = existingReports?.find(r => r.celula_id === celulaId && r.week_start === weekStart);
-    if (report) {
-      setFormData({
-        members_present: report.members_present,
-        leaders_in_training: report.leaders_in_training,
-        discipleships: report.discipleships,
-        visitors: report.visitors,
-        children: report.children,
-        notes: report.notes || '',
-      });
-    } else {
-      setFormData({
-        members_present: 0,
-        leaders_in_training: 0,
-        discipleships: 0,
-        visitors: 0,
-        children: 0,
-        notes: '',
-      });
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -86,13 +93,6 @@ export function CellLeaderDashboard() {
     }
   };
 
-  const formatWeekDisplay = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 6);
-    return `${date.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
-  };
-
   // Show all celulas in controlled environment
   const userCelulas = celulas || [];
 
@@ -114,11 +114,11 @@ export function CellLeaderDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Relatório Semanal da Célula</h2>
-          <p className="text-muted-foreground">Semana: {formatWeekDisplay(weekStart)}</p>
         </div>
+        <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
       </div>
 
       <Card>
