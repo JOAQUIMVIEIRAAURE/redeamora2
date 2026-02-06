@@ -3,16 +3,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye } from 'lucide-react';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useWeeklyReportsByCoordenacao } from '@/hooks/useWeeklyReports';
 import { WeekSelector, getWeekStartString } from './WeekSelector';
+import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 
 export function CoordinatorDashboard() {
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
   
   const [selectedCoordenacao, setSelectedCoordenacao] = useState<string>('');
   const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+  const [selectedCelula, setSelectedCelula] = useState<{ id: string; name: string } | null>(null);
   const weekStart = getWeekStartString(selectedWeek);
   
   const { data: reports, isLoading: reportsLoading } = useWeeklyReportsByCoordenacao(selectedCoordenacao);
@@ -130,6 +133,7 @@ export function CoordinatorDashboard() {
                       <TableHead className="text-center">Visitantes</TableHead>
                       <TableHead className="text-center">Crianças</TableHead>
                       <TableHead className="text-center">Total</TableHead>
+                      <TableHead className="text-center">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -146,6 +150,18 @@ export function CoordinatorDashboard() {
                           <TableCell className="text-center">{report.children}</TableCell>
                           <TableCell className="text-center">
                             <Badge variant="secondary">{total}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setSelectedCelula({ 
+                                id: report.celula_id, 
+                                name: report.celula?.name || '' 
+                              })}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
                           </TableCell>
                         </TableRow>
                       );
@@ -172,6 +188,15 @@ export function CoordinatorDashboard() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {selectedCelula && (
+        <CelulaDetailsDialog
+          open={!!selectedCelula}
+          onOpenChange={(open) => !open && setSelectedCelula(null)}
+          celulaId={selectedCelula.id}
+          celulaName={selectedCelula.name}
+        />
       )}
     </div>
   );

@@ -4,11 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2, ClipboardList, Users2 } from 'lucide-react';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReports, useCreateWeeklyReport } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
 import { WeekSelector, getWeekStartString } from './WeekSelector';
+import { MembersList } from './cellleader/MembersList';
+import { CasaisManager } from './cellleader/CasaisManager';
 
 export function CellLeaderDashboard() {
   const { toast } = useToast();
@@ -116,15 +119,14 @@ export function CellLeaderDashboard() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Relatório Semanal da Célula</h2>
+          <h2 className="text-2xl font-bold text-foreground">Gestão da Célula</h2>
         </div>
-        <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Selecione sua Célula</CardTitle>
-          <CardDescription>Escolha a célula para preencher o relatório semanal</CardDescription>
+          <CardDescription>Escolha a célula para gerenciar</CardDescription>
         </CardHeader>
         <CardContent>
           <Select value={selectedCelula} onValueChange={handleCelulaChange}>
@@ -142,64 +144,93 @@ export function CellLeaderDashboard() {
         </CardContent>
       </Card>
 
-      {selectedCelula && (
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {statCards.map(({ icon: Icon, label, key, color }) => (
-              <Card key={key}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {label}
-                  </CardTitle>
-                  <Icon className={`h-4 w-4 ${color}`} />
+      {selectedCelula ? (
+        <Tabs defaultValue="relatorio" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="relatorio" className="flex items-center gap-2">
+              <ClipboardList className="h-4 w-4" />
+              <span className="hidden sm:inline">Relatório</span>
+            </TabsTrigger>
+            <TabsTrigger value="membros" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Membros</span>
+            </TabsTrigger>
+            <TabsTrigger value="casais" className="flex items-center gap-2">
+              <Users2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Casais</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="relatorio" className="space-y-4">
+            <div className="flex justify-end">
+              <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
+            </div>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                {statCards.map(({ icon: Icon, label, key, color }) => (
+                  <Card key={key}>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">
+                        {label}
+                      </CardTitle>
+                      <Icon className={`h-4 w-4 ${color}`} />
+                    </CardHeader>
+                    <CardContent>
+                      <Input
+                        type="number"
+                        min="0"
+                        value={formData[key as keyof typeof formData]}
+                        onChange={(e) => setFormData(prev => ({
+                          ...prev,
+                          [key]: parseInt(e.target.value) || 0
+                        }))}
+                        className="text-2xl font-bold h-12"
+                      />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle className="text-sm font-medium">Observações</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formData[key as keyof typeof formData]}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      [key]: parseInt(e.target.value) || 0
-                    }))}
-                    className="text-2xl font-bold h-12"
+                <CardContent className="space-y-4">
+                  <Textarea
+                    placeholder="Adicione observações sobre a reunião..."
+                    value={formData.notes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    rows={4}
                   />
+                  <Button type="submit" className="w-full" disabled={createReport.isPending}>
+                    {createReport.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Salvar Relatório
+                  </Button>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            </form>
+          </TabsContent>
 
-          <Card className="mt-4">
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Observações</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Textarea
-                placeholder="Adicione observações sobre a reunião..."
-                value={formData.notes}
-                onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                rows={4}
-              />
-              <Button type="submit" className="w-full" disabled={createReport.isPending}>
-                {createReport.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                Salvar Relatório
-              </Button>
-            </CardContent>
-          </Card>
-        </form>
-      )}
+          <TabsContent value="membros">
+            <MembersList celulaId={selectedCelula} />
+          </TabsContent>
 
-      {!selectedCelula && (
+          <TabsContent value="casais">
+            <CasaisManager celulaId={selectedCelula} />
+          </TabsContent>
+        </Tabs>
+      ) : (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium">Selecione uma célula</h3>
             <p className="text-muted-foreground mt-1">
-              Escolha sua célula acima para começar a preencher o relatório semanal
+              Escolha sua célula acima para gerenciar membros, casais e relatórios
             </p>
           </CardContent>
         </Card>
