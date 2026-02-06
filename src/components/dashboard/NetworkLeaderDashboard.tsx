@@ -20,8 +20,9 @@ export function NetworkLeaderDashboard() {
   
   const weekStart = getCurrentWeekStart();
 
-  // Filter redes where user is leader
-  const userRedes = redes?.filter(r => r.leader?.id === profile?.id) || redes || [];
+  // Filter redes where user is leader - if none found, show all
+  const filteredRedes = redes?.filter(r => r.leader?.id === profile?.id) || [];
+  const userRedes = filteredRedes.length > 0 ? filteredRedes : (redes || []);
 
   // Filter reports for current week
   const currentWeekReports = redeData?.reports?.filter(r => r.week_start === weekStart) || [];

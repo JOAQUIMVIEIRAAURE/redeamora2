@@ -17,8 +17,9 @@ export function CoordinatorDashboard() {
   
   const weekStart = getCurrentWeekStart();
 
-  // Filter coordenacoes where user is leader
-  const userCoordenacoes = coordenacoes?.filter(c => c.leader?.id === profile?.id) || coordenacoes || [];
+  // Filter coordenacoes where user is leader - if none found, show all
+  const filteredCoordenacoes = coordenacoes?.filter(c => c.leader?.id === profile?.id) || [];
+  const userCoordenacoes = filteredCoordenacoes.length > 0 ? filteredCoordenacoes : (coordenacoes || []);
 
   // Filter reports for current week
   const currentWeekReports = reports?.filter(r => r.week_start === weekStart) || [];
