@@ -6,10 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid } from 'lucide-react';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useWeeklyReportsByCoordenacao, getCurrentWeekStart } from '@/hooks/useWeeklyReports';
-import { useAuth } from '@/contexts/AuthContext';
 
 export function CoordinatorDashboard() {
-  const { profile } = useAuth();
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
   
   const [selectedCoordenacao, setSelectedCoordenacao] = useState<string>('');
@@ -17,9 +15,8 @@ export function CoordinatorDashboard() {
   
   const weekStart = getCurrentWeekStart();
 
-  // Filter coordenacoes where user is leader - if none found, show all
-  const filteredCoordenacoes = coordenacoes?.filter(c => c.leader?.id === profile?.id) || [];
-  const userCoordenacoes = filteredCoordenacoes.length > 0 ? filteredCoordenacoes : (coordenacoes || []);
+  // Show all coordenacoes in controlled environment
+  const userCoordenacoes = coordenacoes || [];
 
   // Filter reports for current week
   const currentWeekReports = reports?.filter(r => r.week_start === weekStart) || [];
