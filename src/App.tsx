@@ -2,11 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { RoleProvider } from "@/contexts/RoleContext";
+import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
 
-import Auth from "./pages/Auth";
+import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Celulas from "./pages/Celulas";
 import Membros from "./pages/Membros";
@@ -24,69 +24,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
+        <RoleProvider>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route
-              path="/dashboard"
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/celulas"
-              element={
-                <ProtectedRoute>
-                  <Celulas />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/membros"
-              element={
-                <ProtectedRoute>
-                  <Membros />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/presenca"
-              element={
-                <ProtectedRoute>
-                  <Presenca />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/redes"
-              element={
-                <ProtectedRoute>
-                  <Redes />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/coordenacoes"
-              element={
-                <ProtectedRoute>
-                  <Coordenacoes />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/configuracoes"
-              element={
-                <ProtectedRoute>
-                  <Configuracoes />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/" element={<Home />} />
+            <Route path="/dashboard" element={<RoleProtectedRoute><Dashboard /></RoleProtectedRoute>} />
+            <Route path="/celulas" element={<RoleProtectedRoute><Celulas /></RoleProtectedRoute>} />
+            <Route path="/membros" element={<RoleProtectedRoute><Membros /></RoleProtectedRoute>} />
+            <Route path="/presenca" element={<RoleProtectedRoute><Presenca /></RoleProtectedRoute>} />
+            <Route path="/redes" element={<RoleProtectedRoute><Redes /></RoleProtectedRoute>} />
+            <Route path="/coordenacoes" element={<RoleProtectedRoute><Coordenacoes /></RoleProtectedRoute>} />
+            <Route path="/configuracoes" element={<RoleProtectedRoute><Configuracoes /></RoleProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </AuthProvider>
+        </RoleProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

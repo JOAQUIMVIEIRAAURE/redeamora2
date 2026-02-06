@@ -2,17 +2,14 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2 } from 'lucide-react';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReports, useCreateWeeklyReport, getCurrentWeekStart } from '@/hooks/useWeeklyReports';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export function CellLeaderDashboard() {
-  const { profile } = useAuth();
   const { toast } = useToast();
   const { data: celulas, isLoading: celulasLoading } = useCelulas();
   const createReport = useCreateWeeklyReport();
@@ -96,9 +93,8 @@ export function CellLeaderDashboard() {
     return `${date.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
   };
 
-  // Filter celulas where user is leader - if none found, show all celulas
-  const filteredCelulas = celulas?.filter(c => c.leader?.id === profile?.id) || [];
-  const userCelulas = filteredCelulas.length > 0 ? filteredCelulas : (celulas || []);
+  // Show all celulas in controlled environment
+  const userCelulas = celulas || [];
 
   const statCards = [
     { icon: Users, label: 'Membros Presentes', key: 'members_present', color: 'text-primary' },

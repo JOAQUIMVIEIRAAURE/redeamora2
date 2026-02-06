@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -9,9 +9,8 @@ import {
   Settings,
   LogOut
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useAuth } from '@/contexts/AuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useRole } from '@/contexts/RoleContext';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -25,6 +24,13 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+
+const roleLabels: Record<string, string> = {
+  admin: 'Administrador',
+  rede_leader: 'Líder de Rede',
+  coordenador: 'Coordenador',
+  celula_leader: 'Líder de Célula',
+};
 
 const mainNavItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -41,9 +47,15 @@ const adminNavItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { profile, signOut, isAdmin, isRedeLeader } = useAuth();
+  const navigate = useNavigate();
+  const { selectedRole, setSelectedRole, isAdmin, isRedeLeader } = useRole();
 
   const showAdminItems = isAdmin || isRedeLeader;
+
+  const handleLogout = () => {
+    setSelectedRole(null);
+    navigate('/');
+  };
 
   return (
     <Sidebar>
@@ -102,24 +114,24 @@ export function AppSidebar() {
       <SidebarFooter className="border-t border-sidebar-border p-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={profile?.avatar_url || undefined} alt={profile?.name} />
             <AvatarFallback>
-              {profile?.name?.charAt(0).toUpperCase() || 'U'}
+              {selectedRole?.charAt(0).toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-1 flex-col overflow-hidden">
             <span className="truncate text-sm font-medium text-sidebar-foreground">
-              {profile?.name || 'Usuário'}
+              {selectedRole ? roleLabels[selectedRole] : 'Usuário'}
             </span>
             <span className="truncate text-xs text-muted-foreground">
-              {profile?.email}
+              Ambiente controlado
             </span>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            onClick={signOut}
+            onClick={handleLogout}
             className="h-8 w-8 shrink-0"
+            title="Voltar à seleção de papel"
           >
             <LogOut className="h-4 w-4" />
           </Button>

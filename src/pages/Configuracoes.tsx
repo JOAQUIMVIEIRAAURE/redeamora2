@@ -1,23 +1,21 @@
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
+import { useRole } from '@/contexts/RoleContext';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { UserRolesManager } from '@/components/settings/UserRolesManager';
 import { WeeklyReportsHistory } from '@/components/reports/WeeklyReportsHistory';
 import { User, Shield, History } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+const roleLabels: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' }> = {
+  admin: { label: 'Administrador', variant: 'default' },
+  rede_leader: { label: 'Líder de Rede', variant: 'secondary' },
+  coordenador: { label: 'Coordenador', variant: 'secondary' },
+  celula_leader: { label: 'Líder de Célula', variant: 'outline' },
+};
 
 export default function Configuracoes() {
-  const { profile, isAdmin, isRedeLeader, isCoordenador, isCelulaLeader } = useAuth();
-
-  const getRoleBadges = () => {
-    const badges = [];
-    if (isAdmin) badges.push({ label: 'Admin', variant: 'default' as const });
-    if (isRedeLeader) badges.push({ label: 'Líder de Rede', variant: 'secondary' as const });
-    if (isCoordenador) badges.push({ label: 'Coordenador', variant: 'secondary' as const });
-    if (isCelulaLeader) badges.push({ label: 'Líder de Célula', variant: 'outline' as const });
-    return badges;
-  };
+  const { selectedRole, isAdmin } = useRole();
 
   return (
     <AppLayout title="Configurações">
@@ -45,31 +43,23 @@ export default function Configuracoes() {
               <CardHeader>
                 <CardTitle>Perfil do Usuário</CardTitle>
                 <CardDescription>
-                  Informações da sua conta
+                  Informações do papel selecionado
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid gap-2">
-                  <label className="text-sm font-medium text-muted-foreground">Nome</label>
-                  <p className="text-sm">{profile?.name || 'Não informado'}</p>
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium text-muted-foreground">Email</label>
-                  <p className="text-sm">{profile?.email || 'Não informado'}</p>
-                </div>
-                <div className="grid gap-2">
-                  <label className="text-sm font-medium text-muted-foreground">Papéis</label>
+                  <label className="text-sm font-medium text-muted-foreground">Papel Atual</label>
                   <div className="flex flex-wrap gap-2">
-                    {getRoleBadges().length > 0 ? (
-                      getRoleBadges().map((badge) => (
-                        <Badge key={badge.label} variant={badge.variant}>
-                          {badge.label}
-                        </Badge>
-                      ))
-                    ) : (
-                      <span className="text-sm text-muted-foreground">Nenhum papel atribuído</span>
+                    {selectedRole && (
+                      <Badge variant={roleLabels[selectedRole]?.variant || 'default'}>
+                        {roleLabels[selectedRole]?.label || selectedRole}
+                      </Badge>
                     )}
                   </div>
+                </div>
+                <div className="grid gap-2">
+                  <label className="text-sm font-medium text-muted-foreground">Ambiente</label>
+                  <p className="text-sm">Ambiente controlado - sem autenticação</p>
                 </div>
               </CardContent>
             </Card>

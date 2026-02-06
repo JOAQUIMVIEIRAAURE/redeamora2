@@ -7,11 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
 import { useWeeklyReportsByRede, getCurrentWeekStart, WeeklyReport } from '@/hooks/useWeeklyReports';
-import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export function NetworkLeaderDashboard() {
-  const { profile } = useAuth();
   const { toast } = useToast();
   const { data: redes, isLoading: redesLoading } = useRedes();
   
@@ -20,9 +18,8 @@ export function NetworkLeaderDashboard() {
   
   const weekStart = getCurrentWeekStart();
 
-  // Filter redes where user is leader - if none found, show all
-  const filteredRedes = redes?.filter(r => r.leader?.id === profile?.id) || [];
-  const userRedes = filteredRedes.length > 0 ? filteredRedes : (redes || []);
+  // Show all redes in controlled environment
+  const userRedes = redes || [];
 
   // Filter reports for current week
   const currentWeekReports = redeData?.reports?.filter(r => r.week_start === weekStart) || [];

@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Plus, Search, Loader2, MoreVertical, UserMinus } from 'lucide-react';
-import { useMembers, useRemoveMember, Member } from '@/hooks/useMembers';
+import { useMembers, useRemoveMember } from '@/hooks/useMembers';
 import { useCelulas } from '@/hooks/useCelulas';
 import { MemberFormDialog } from '@/components/members/MemberFormDialog';
 import { format } from 'date-fns';
