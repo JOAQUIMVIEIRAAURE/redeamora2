@@ -6,6 +6,11 @@ import { useToast } from '@/hooks/use-toast';
 export type Member = Tables<'members'> & {
   profile?: { id: string; name: string; avatar_url: string | null; email: string | null } | null;
   celula?: { id: string; name: string } | null;
+  batismo?: boolean;
+  encontro_com_deus?: boolean;
+  renovo?: boolean;
+  encontro_de_casais?: boolean;
+  curso_lidere?: boolean;
 };
 
 export function useMembers(celulaId?: string) {
@@ -15,7 +20,8 @@ export function useMembers(celulaId?: string) {
       let query = supabase
         .from('members')
         .select(`
-          *,
+          id, profile_id, celula_id, is_active, joined_at,
+          batismo, encontro_com_deus, renovo, encontro_de_casais, curso_lidere,
           profile:profiles!members_profile_id_fkey(id, name, avatar_url, email),
           celula:celulas!members_celula_id_fkey(id, name)
         `)

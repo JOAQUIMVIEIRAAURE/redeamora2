@@ -53,6 +53,55 @@ export type Database = {
           },
         ]
       }
+      casais: {
+        Row: {
+          celula_id: string
+          created_at: string
+          id: string
+          member1_id: string
+          member2_id: string
+          updated_at: string
+        }
+        Insert: {
+          celula_id: string
+          created_at?: string
+          id?: string
+          member1_id: string
+          member2_id: string
+          updated_at?: string
+        }
+        Update: {
+          celula_id?: string
+          created_at?: string
+          id?: string
+          member1_id?: string
+          member2_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "casais_celula_id_fkey"
+            columns: ["celula_id"]
+            isOneToOne: false
+            referencedRelation: "celulas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casais_member1_id_fkey"
+            columns: ["member1_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "casais_member2_id_fkey"
+            columns: ["member2_id"]
+            isOneToOne: false
+            referencedRelation: "members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       celulas: {
         Row: {
           address: string | null
@@ -180,25 +229,40 @@ export type Database = {
       }
       members: {
         Row: {
+          batismo: boolean | null
           celula_id: string
+          curso_lidere: boolean | null
+          encontro_com_deus: boolean | null
+          encontro_de_casais: boolean | null
           id: string
           is_active: boolean
           joined_at: string
           profile_id: string
+          renovo: boolean | null
         }
         Insert: {
+          batismo?: boolean | null
           celula_id: string
+          curso_lidere?: boolean | null
+          encontro_com_deus?: boolean | null
+          encontro_de_casais?: boolean | null
           id?: string
           is_active?: boolean
           joined_at?: string
           profile_id: string
+          renovo?: boolean | null
         }
         Update: {
+          batismo?: boolean | null
           celula_id?: string
+          curso_lidere?: boolean | null
+          encontro_com_deus?: boolean | null
+          encontro_de_casais?: boolean | null
           id?: string
           is_active?: boolean
           joined_at?: string
           profile_id?: string
+          renovo?: boolean | null
         }
         Relationships: [
           {

@@ -4,11 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download, ChevronDown, ChevronUp, Eye } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
 import { useWeeklyReportsByRede, WeeklyReport } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
 import { WeekSelector, getWeekStartString } from './WeekSelector';
+import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -18,9 +20,23 @@ export function NetworkLeaderDashboard() {
   
   const [selectedRede, setSelectedRede] = useState<string>('');
   const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+  const [expandedCoords, setExpandedCoords] = useState<Set<string>>(new Set());
+  const [selectedCelula, setSelectedCelula] = useState<{ id: string; name: string } | null>(null);
   const weekStart = getWeekStartString(selectedWeek);
   
   const { data: redeData, isLoading: reportsLoading } = useWeeklyReportsByRede(selectedRede);
+
+  const toggleCoord = (coordId: string) => {
+    setExpandedCoords(prev => {
+      const next = new Set(prev);
+      if (next.has(coordId)) {
+        next.delete(coordId);
+      } else {
+        next.add(coordId);
+      }
+      return next;
+    });
+  };
 
   // Show all redes in controlled environment
   const userRedes = redes || [];
@@ -258,60 +274,124 @@ export function NetworkLeaderDashboard() {
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : Object.keys(reportsByCoordenacao).length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Coordenação</TableHead>
-                      <TableHead className="text-center">Células</TableHead>
-                      <TableHead className="text-center">Membros</TableHead>
-                      <TableHead className="text-center">Líderes Trein.</TableHead>
-                      <TableHead className="text-center">Discipulados</TableHead>
-                      <TableHead className="text-center">Visitantes</TableHead>
-                      <TableHead className="text-center">Crianças</TableHead>
-                      <TableHead className="text-center">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {Object.entries(reportsByCoordenacao).map(([coordId, coord]) => {
-                      const total = coord.totals.members_present + coord.totals.leaders_in_training + 
-                        coord.totals.discipleships + coord.totals.visitors + coord.totals.children;
-                      return (
-                        <TableRow key={coordId}>
-                          <TableCell className="font-medium">{coord.name}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="outline">{coord.reports.length}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">{coord.totals.members_present}</TableCell>
-                          <TableCell className="text-center">{coord.totals.leaders_in_training}</TableCell>
-                          <TableCell className="text-center">{coord.totals.discipleships}</TableCell>
-                          <TableCell className="text-center">{coord.totals.visitors}</TableCell>
-                          <TableCell className="text-center">{coord.totals.children}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge>{total}</Badge>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                    {/* Grand Total Row */}
-                    <TableRow className="bg-muted/50 font-bold">
-                      <TableCell>TOTAL GERAL</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline">{currentWeekReports.length}</Badge>
-                      </TableCell>
-                      <TableCell className="text-center">{grandTotals.members_present}</TableCell>
-                      <TableCell className="text-center">{grandTotals.leaders_in_training}</TableCell>
-                      <TableCell className="text-center">{grandTotals.discipleships}</TableCell>
-                      <TableCell className="text-center">{grandTotals.visitors}</TableCell>
-                      <TableCell className="text-center">{grandTotals.children}</TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="default">
-                          {grandTotals.members_present + grandTotals.leaders_in_training + 
-                            grandTotals.discipleships + grandTotals.visitors + grandTotals.children}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+                <div className="space-y-4">
+                  {Object.entries(reportsByCoordenacao).map(([coordId, coord]) => {
+                    const total = coord.totals.members_present + coord.totals.leaders_in_training + 
+                      coord.totals.discipleships + coord.totals.visitors + coord.totals.children;
+                    const isExpanded = expandedCoords.has(coordId);
+                    
+                    return (
+                      <Collapsible key={coordId} open={isExpanded} onOpenChange={() => toggleCoord(coordId)}>
+                        <Card>
+                          <CollapsibleTrigger asChild>
+                            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <CardTitle className="text-base">{coord.name}</CardTitle>
+                                  <CardDescription>
+                                    {coord.reports.length} célula(s) • Total: {total}
+                                  </CardDescription>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+                                    <span>Membros: {coord.totals.members_present}</span>
+                                    <span>•</span>
+                                    <span>Visitantes: {coord.totals.visitors}</span>
+                                  </div>
+                                  {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                </div>
+                              </div>
+                            </CardHeader>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <CardContent className="pt-0">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Célula</TableHead>
+                                    <TableHead className="text-center">Membros</TableHead>
+                                    <TableHead className="text-center">Líderes</TableHead>
+                                    <TableHead className="text-center">Disc.</TableHead>
+                                    <TableHead className="text-center">Vis.</TableHead>
+                                    <TableHead className="text-center">Crianças</TableHead>
+                                    <TableHead className="text-center">Ações</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {coord.reports.map(report => (
+                                    <TableRow key={report.id}>
+                                      <TableCell className="font-medium">{report.celula?.name}</TableCell>
+                                      <TableCell className="text-center">{report.members_present}</TableCell>
+                                      <TableCell className="text-center">{report.leaders_in_training}</TableCell>
+                                      <TableCell className="text-center">{report.discipleships}</TableCell>
+                                      <TableCell className="text-center">{report.visitors}</TableCell>
+                                      <TableCell className="text-center">{report.children}</TableCell>
+                                      <TableCell className="text-center">
+                                        <Button 
+                                          variant="ghost" 
+                                          size="sm"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedCelula({ 
+                                              id: report.celula_id, 
+                                              name: report.celula?.name || '' 
+                                            });
+                                          }}
+                                        >
+                                          <Eye className="h-4 w-4" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </CardContent>
+                          </CollapsibleContent>
+                        </Card>
+                      </Collapsible>
+                    );
+                  })}
+
+                  {/* Grand Total Card */}
+                  <Card className="bg-muted/50">
+                    <CardContent className="py-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-bold">TOTAL GERAL</p>
+                          <p className="text-sm text-muted-foreground">
+                            {currentWeekReports.length} célula(s) com relatório
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="text-center">
+                            <p className="font-bold">{grandTotals.members_present}</p>
+                            <p className="text-muted-foreground">Membros</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="font-bold">{grandTotals.leaders_in_training}</p>
+                            <p className="text-muted-foreground">Líderes</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="font-bold">{grandTotals.discipleships}</p>
+                            <p className="text-muted-foreground">Disc.</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="font-bold">{grandTotals.visitors}</p>
+                            <p className="text-muted-foreground">Vis.</p>
+                          </div>
+                          <div className="text-center">
+                            <p className="font-bold">{grandTotals.children}</p>
+                            <p className="text-muted-foreground">Crianças</p>
+                          </div>
+                          <Badge variant="default" className="text-lg">
+                            {grandTotals.members_present + grandTotals.leaders_in_training + 
+                              grandTotals.discipleships + grandTotals.visitors + grandTotals.children}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhum relatório enviado nesta semana
@@ -332,6 +412,15 @@ export function NetworkLeaderDashboard() {
             </p>
           </CardContent>
         </Card>
+      )}
+
+      {selectedCelula && (
+        <CelulaDetailsDialog
+          open={!!selectedCelula}
+          onOpenChange={(open) => !open && setSelectedCelula(null)}
+          celulaId={selectedCelula.id}
+          celulaName={selectedCelula.name}
+        />
       )}
     </div>
   );
