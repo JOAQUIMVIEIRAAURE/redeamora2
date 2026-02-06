@@ -4,11 +4,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye, ClipboardCheck } from 'lucide-react';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useWeeklyReportsByCoordenacao } from '@/hooks/useWeeklyReports';
+import { useSupervisoesByCoordenacao } from '@/hooks/useSupervisoes';
 import { WeekSelector, getWeekStartString } from './WeekSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
+import { SupervisoesList } from './SupervisoesList';
 
 export function CoordinatorDashboard() {
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
@@ -17,8 +19,8 @@ export function CoordinatorDashboard() {
   const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
   const [selectedCelula, setSelectedCelula] = useState<{ id: string; name: string } | null>(null);
   const weekStart = getWeekStartString(selectedWeek);
-  
   const { data: reports, isLoading: reportsLoading } = useWeeklyReportsByCoordenacao(selectedCoordenacao);
+  const { data: supervisoes, isLoading: supervisoesLoading } = useSupervisoesByCoordenacao(selectedCoordenacao);
 
   // Show all coordenacoes in controlled environment
   const userCoordenacoes = coordenacoes || [];
@@ -41,12 +43,19 @@ export function CoordinatorDashboard() {
     children: 0,
   });
 
+  // Stats for supervisoes
+  const supervisoesStats = {
+    total: supervisoes?.length || 0,
+    realizadas: supervisoes?.filter(s => s.celula_realizada).length || 0,
+  };
+
   const statCards = [
     { icon: Users, label: 'Total Membros', value: totals.members_present },
     { icon: UserCheck, label: 'Líderes em Treinamento', value: totals.leaders_in_training },
     { icon: Heart, label: 'Discipulados', value: totals.discipleships },
     { icon: UserPlus, label: 'Visitantes', value: totals.visitors },
     { icon: Baby, label: 'Crianças', value: totals.children },
+    { icon: ClipboardCheck, label: 'Supervisões', value: supervisoesStats.total },
   ];
 
   if (coordenacoesLoading) {
@@ -90,7 +99,7 @@ export function CoordinatorDashboard() {
       {selectedCoordenacao && (
         <>
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             {statCards.map(({ icon: Icon, label, value }) => (
               <Card key={label}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -175,6 +184,14 @@ export function CoordinatorDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* Supervisões */}
+          {supervisoes && supervisoes.length > 0 && (
+            <SupervisoesList 
+              supervisoes={supervisoes} 
+              title="Supervisões da Coordenação"
+            />
+          )}
         </>
       )}
 

@@ -349,6 +349,150 @@ export type Database = {
           },
         ]
       }
+      supervisoes: {
+        Row: {
+          apresentacao_visitantes: boolean | null
+          avisos: boolean | null
+          cadeira_amor: boolean | null
+          celula_id: string
+          celula_realizada: boolean
+          comunhao: boolean | null
+          created_at: string
+          data_supervisao: string
+          dinamica: boolean | null
+          horario_inicio: string
+          horario_termino: string
+          id: string
+          interatividade: boolean | null
+          licao: boolean | null
+          louvor: boolean | null
+          momento_visao_triade: boolean | null
+          motivo_cancelamento: string | null
+          oracao_final: boolean | null
+          oracao_inicial: boolean | null
+          organizacao: boolean | null
+          pontos_alinhar: string | null
+          pontos_positivos: string | null
+          pontualidade: boolean | null
+          quebra_gelo: boolean | null
+          selfie: boolean | null
+          supervisor_id: string
+          updated_at: string
+        }
+        Insert: {
+          apresentacao_visitantes?: boolean | null
+          avisos?: boolean | null
+          cadeira_amor?: boolean | null
+          celula_id: string
+          celula_realizada?: boolean
+          comunhao?: boolean | null
+          created_at?: string
+          data_supervisao: string
+          dinamica?: boolean | null
+          horario_inicio: string
+          horario_termino: string
+          id?: string
+          interatividade?: boolean | null
+          licao?: boolean | null
+          louvor?: boolean | null
+          momento_visao_triade?: boolean | null
+          motivo_cancelamento?: string | null
+          oracao_final?: boolean | null
+          oracao_inicial?: boolean | null
+          organizacao?: boolean | null
+          pontos_alinhar?: string | null
+          pontos_positivos?: string | null
+          pontualidade?: boolean | null
+          quebra_gelo?: boolean | null
+          selfie?: boolean | null
+          supervisor_id: string
+          updated_at?: string
+        }
+        Update: {
+          apresentacao_visitantes?: boolean | null
+          avisos?: boolean | null
+          cadeira_amor?: boolean | null
+          celula_id?: string
+          celula_realizada?: boolean
+          comunhao?: boolean | null
+          created_at?: string
+          data_supervisao?: string
+          dinamica?: boolean | null
+          horario_inicio?: string
+          horario_termino?: string
+          id?: string
+          interatividade?: boolean | null
+          licao?: boolean | null
+          louvor?: boolean | null
+          momento_visao_triade?: boolean | null
+          motivo_cancelamento?: string | null
+          oracao_final?: boolean | null
+          oracao_inicial?: boolean | null
+          organizacao?: boolean | null
+          pontos_alinhar?: string | null
+          pontos_positivos?: string | null
+          pontualidade?: boolean | null
+          quebra_gelo?: boolean | null
+          selfie?: boolean | null
+          supervisor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisoes_celula_id_fkey"
+            columns: ["celula_id"]
+            isOneToOne: false
+            referencedRelation: "celulas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supervisoes_supervisor_id_fkey"
+            columns: ["supervisor_id"]
+            isOneToOne: false
+            referencedRelation: "supervisores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supervisores: {
+        Row: {
+          coordenacao_id: string
+          created_at: string
+          id: string
+          profile_id: string
+          updated_at: string
+        }
+        Insert: {
+          coordenacao_id: string
+          created_at?: string
+          id?: string
+          profile_id: string
+          updated_at?: string
+        }
+        Update: {
+          coordenacao_id?: string
+          created_at?: string
+          id?: string
+          profile_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supervisores_coordenacao_id_fkey"
+            columns: ["coordenacao_id"]
+            isOneToOne: false
+            referencedRelation: "coordenacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supervisores_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -496,7 +640,12 @@ export type Database = {
       is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "rede_leader" | "coordenador" | "celula_leader"
+      app_role:
+        | "admin"
+        | "rede_leader"
+        | "coordenador"
+        | "celula_leader"
+        | "supervisor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -624,7 +773,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "rede_leader", "coordenador", "celula_leader"],
+      app_role: [
+        "admin",
+        "rede_leader",
+        "coordenador",
+        "celula_leader",
+        "supervisor",
+      ],
     },
   },
 } as const

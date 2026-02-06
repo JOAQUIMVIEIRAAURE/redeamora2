@@ -1,0 +1,198 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
+import { Calendar, Clock, MapPin, User, AlertCircle } from 'lucide-react';
+import { Supervisao } from '@/hooks/useSupervisoes';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+interface SupervisaoDetailsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  supervisao: Supervisao;
+}
+
+const roteiroLabels: Record<string, string> = {
+  oracao_inicial: '1) Oração inicial',
+  louvor: '2) Louvor',
+  apresentacao_visitantes: '3) Apresentação de visitantes',
+  momento_visao_triade: '4) Momento da visão e Tríade',
+  avisos: '5) Avisos',
+  quebra_gelo: '6) Quebra gelo',
+  licao: '7) Lição',
+  cadeira_amor: '8) Cadeira do amor',
+  oracao_final: '9) Oração final',
+  selfie: '10) Selfie',
+  comunhao: '11) Comunhão',
+};
+
+const avaliacaoLabels: Record<string, string> = {
+  pontualidade: '1) Pontualidade',
+  dinamica: '2) Dinâmica',
+  organizacao: '3) Organização',
+  interatividade: '4) Interatividade',
+};
+
+export function SupervisaoDetailsDialog({ open, onOpenChange, supervisao }: SupervisaoDetailsDialogProps) {
+  const roteiroItems = Object.entries(roteiroLabels).map(([key, label]) => ({
+    key,
+    label,
+    value: supervisao[key as keyof Supervisao] as boolean,
+  }));
+
+  const avaliacaoItems = Object.entries(avaliacaoLabels).map(([key, label]) => ({
+    key,
+    label,
+    value: supervisao[key as keyof Supervisao] as boolean,
+  }));
+
+  const roteiroScore = roteiroItems.filter(item => item.value).length;
+  const avaliacaoScore = avaliacaoItems.filter(item => item.value).length;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[90vh]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            Supervisão - {supervisao.celula?.name}
+            {supervisao.celula_realizada ? (
+              <Badge variant="default">Realizada</Badge>
+            ) : (
+              <Badge variant="destructive">Não Realizada</Badge>
+            )}
+          </DialogTitle>
+        </DialogHeader>
+        
+        <ScrollArea className="max-h-[70vh] pr-4">
+          <div className="space-y-6">
+            {/* Header Info */}
+            <Card>
+              <CardContent className="py-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      {format(new Date(supervisao.data_supervisao), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      {supervisao.horario_inicio} - {supervisao.horario_termino}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{supervisao.celula?.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">
+                      Supervisor: {supervisao.supervisor?.profile?.name || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {!supervisao.celula_realizada && (
+              <Card className="border-destructive">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    Célula Não Realizada
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm">
+                    {supervisao.motivo_cancelamento || 'Motivo não informado'}
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {supervisao.celula_realizada && (
+              <>
+                {/* Roteiro */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">Roteiro da Célula</CardTitle>
+                      <Badge variant="outline">
+                        {roteiroScore}/{roteiroItems.length}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {roteiroItems.map(item => (
+                        <div key={item.key} className="flex items-center justify-between py-1">
+                          <span className="text-sm">{item.label}</span>
+                          <span className="text-lg">{item.value ? '✅' : '❌'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Avaliação */}
+                <Card>
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base">Avaliação Geral</CardTitle>
+                      <Badge variant="outline">
+                        {avaliacaoScore}/{avaliacaoItems.length}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-2 md:grid-cols-2">
+                      {avaliacaoItems.map(item => (
+                        <div key={item.key} className="flex items-center justify-between py-1">
+                          <span className="text-sm">{item.label}</span>
+                          <span className="text-lg">{item.value ? '✅' : '❌'}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Observations */}
+                {(supervisao.pontos_alinhar || supervisao.pontos_positivos) && (
+                  <Card>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base">Observações</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {supervisao.pontos_alinhar && (
+                        <div>
+                          <h4 className="font-semibold text-sm mb-1">Pontos a Alinhar:</h4>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {supervisao.pontos_alinhar}
+                          </p>
+                        </div>
+                      )}
+                      
+                      {supervisao.pontos_alinhar && supervisao.pontos_positivos && <Separator />}
+                      
+                      {supervisao.pontos_positivos && (
+                        <div>
+                          <h4 className="font-semibold text-sm mb-1">Pontos Positivos:</h4>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {supervisao.pontos_positivos}
+                          </p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            )}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}

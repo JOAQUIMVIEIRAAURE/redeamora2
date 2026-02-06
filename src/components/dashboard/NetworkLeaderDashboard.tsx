@@ -5,12 +5,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download, ChevronDown, ChevronUp, Eye } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download, ChevronDown, ChevronUp, Eye, ClipboardCheck } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
 import { useWeeklyReportsByRede, WeeklyReport } from '@/hooks/useWeeklyReports';
+import { useSupervisoesByRede } from '@/hooks/useSupervisoes';
 import { useToast } from '@/hooks/use-toast';
 import { WeekSelector, getWeekStartString } from './WeekSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
+import { SupervisoesList } from './SupervisoesList';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -25,6 +27,7 @@ export function NetworkLeaderDashboard() {
   const weekStart = getWeekStartString(selectedWeek);
   
   const { data: redeData, isLoading: reportsLoading } = useWeeklyReportsByRede(selectedRede);
+  const { data: supervisoes } = useSupervisoesByRede(selectedRede);
 
   const toggleCoord = (coordId: string) => {
     setExpandedCoords(prev => {
@@ -190,6 +193,7 @@ export function NetworkLeaderDashboard() {
     { icon: Heart, label: 'Discipulados', value: grandTotals.discipleships },
     { icon: UserPlus, label: 'Visitantes', value: grandTotals.visitors },
     { icon: Baby, label: 'Crianças', value: grandTotals.children },
+    { icon: ClipboardCheck, label: 'Supervisões', value: supervisoes?.length || 0 },
   ];
 
   if (redesLoading) {
@@ -241,7 +245,7 @@ export function NetworkLeaderDashboard() {
       {selectedRede && (
         <>
           {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             {statCards.map(({ icon: Icon, label, value }) => (
               <Card key={label}>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -399,6 +403,15 @@ export function NetworkLeaderDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* Supervisões */}
+          {supervisoes && supervisoes.length > 0 && (
+            <SupervisoesList 
+              supervisoes={supervisoes} 
+              title="Supervisões da Rede"
+              showCoordenacao
+            />
+          )}
         </>
       )}
 
