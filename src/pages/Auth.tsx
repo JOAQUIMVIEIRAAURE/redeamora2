@@ -1,12 +1,70 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Auth() {
   const { user, isLoading, signInWithGoogle } = useAuth();
   const navigate = useNavigate();
+  const [isProcessingCallback, setIsProcessingCallback] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  // Process OAuth callback on mount
+  useEffect(() => {
+    const processOAuthCallback = async () => {
+      // Check if this is an OAuth callback (has hash or code parameter)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // Check for error in callback
+      const error = hashParams.get('error') || urlParams.get('error');
+      const errorDescription = hashParams.get('error_description') || urlParams.get('error_description');
+      
+      if (error) {
+        console.error('OAuth error:', error, errorDescription);
+        setAuthError(errorDescription || error);
+        // Clear the URL params
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+      
+      // Check for access_token or code (OAuth callback)
+      const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
+      const code = urlParams.get('code');
+      
+      if ((accessToken && refreshToken) || code) {
+        setIsProcessingCallback(true);
+        try {
+          if (accessToken && refreshToken) {
+            // Token-based callback (implicit flow)
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (error) {
+              console.error('Error setting session:', error);
+              setAuthError(error.message);
+            }
+          }
+          // For code-based callback (PKCE flow), supabase should handle it automatically
+          // via onAuthStateChange
+          
+          // Clear the URL params
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } catch (error) {
+          console.error('OAuth callback error:', error);
+          setAuthError(error instanceof Error ? error.message : 'Erro ao processar autenticação');
+        } finally {
+          setIsProcessingCallback(false);
+        }
+      }
+    };
+
+    processOAuthCallback();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -14,7 +72,7 @@ export default function Auth() {
     }
   }, [user, navigate]);
 
-  if (isLoading) {
+  if (isLoading || isProcessingCallback) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="animate-pulse text-muted-foreground">Carregando...</div>
@@ -35,8 +93,16 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {authError && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              {authError}
+            </div>
+          )}
           <Button 
-            onClick={signInWithGoogle} 
+            onClick={() => {
+              setAuthError(null);
+              signInWithGoogle();
+            }} 
             className="w-full bg-primary hover:bg-primary/90"
             size="lg"
           >
