@@ -109,6 +109,7 @@ export type Database = {
           created_at: string
           id: string
           leader_id: string | null
+          leadership_couple_id: string | null
           meeting_day: string | null
           meeting_time: string | null
           name: string
@@ -120,6 +121,7 @@ export type Database = {
           created_at?: string
           id?: string
           leader_id?: string | null
+          leadership_couple_id?: string | null
           meeting_day?: string | null
           meeting_time?: string | null
           name: string
@@ -131,6 +133,7 @@ export type Database = {
           created_at?: string
           id?: string
           leader_id?: string | null
+          leadership_couple_id?: string | null
           meeting_day?: string | null
           meeting_time?: string | null
           name?: string
@@ -151,6 +154,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "celulas_leadership_couple_id_fkey"
+            columns: ["leadership_couple_id"]
+            isOneToOne: false
+            referencedRelation: "leadership_couples"
+            referencedColumns: ["id"]
+          },
         ]
       }
       coordenacoes: {
@@ -158,6 +168,7 @@ export type Database = {
           created_at: string
           id: string
           leader_id: string | null
+          leadership_couple_id: string | null
           name: string
           rede_id: string
           updated_at: string
@@ -166,6 +177,7 @@ export type Database = {
           created_at?: string
           id?: string
           leader_id?: string | null
+          leadership_couple_id?: string | null
           name: string
           rede_id: string
           updated_at?: string
@@ -174,6 +186,7 @@ export type Database = {
           created_at?: string
           id?: string
           leader_id?: string | null
+          leadership_couple_id?: string | null
           name?: string
           rede_id?: string
           updated_at?: string
@@ -187,10 +200,56 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "coordenacoes_leadership_couple_id_fkey"
+            columns: ["leadership_couple_id"]
+            isOneToOne: false
+            referencedRelation: "leadership_couples"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "coordenacoes_rede_id_fkey"
             columns: ["rede_id"]
             isOneToOne: false
             referencedRelation: "redes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leadership_couples: {
+        Row: {
+          created_at: string
+          id: string
+          spouse1_id: string
+          spouse2_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          spouse1_id: string
+          spouse2_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          spouse1_id?: string
+          spouse2_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leadership_couples_spouse1_id_fkey"
+            columns: ["spouse1_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leadership_couples_spouse2_id_fkey"
+            columns: ["spouse2_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -328,6 +387,7 @@ export type Database = {
           created_at: string
           id: string
           leader_id: string | null
+          leadership_couple_id: string | null
           name: string
           updated_at: string
         }
@@ -335,6 +395,7 @@ export type Database = {
           created_at?: string
           id?: string
           leader_id?: string | null
+          leadership_couple_id?: string | null
           name: string
           updated_at?: string
         }
@@ -342,6 +403,7 @@ export type Database = {
           created_at?: string
           id?: string
           leader_id?: string | null
+          leadership_couple_id?: string | null
           name?: string
           updated_at?: string
         }
@@ -351,6 +413,13 @@ export type Database = {
             columns: ["leader_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redes_leadership_couple_id_fkey"
+            columns: ["leadership_couple_id"]
+            isOneToOne: false
+            referencedRelation: "leadership_couples"
             referencedColumns: ["id"]
           },
         ]
@@ -652,6 +721,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_leadership_couple_member: {
+        Args: { _couple_id: string; _profile_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role:

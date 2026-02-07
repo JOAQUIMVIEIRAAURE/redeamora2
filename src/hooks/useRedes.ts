@@ -2,9 +2,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { useToast } from '@/hooks/use-toast';
+import { LeadershipCouple } from './useLeadershipCouples';
 
 export type Rede = Tables<'redes'> & {
   leader?: { id: string; name: string; avatar_url: string | null } | null;
+  leadership_couple?: LeadershipCouple | null;
   _count?: { coordenacoes: number };
 };
 
@@ -16,7 +18,12 @@ export function useRedes() {
         .from('redes')
         .select(`
           *,
-          leader:profiles!redes_leader_id_fkey(id, name, avatar_url)
+          leader:profiles!redes_leader_id_fkey(id, name, avatar_url),
+          leadership_couple:leadership_couples(
+            id, spouse1_id, spouse2_id, created_at, updated_at,
+            spouse1:profiles!leadership_couples_spouse1_id_fkey(id, name, avatar_url, email),
+            spouse2:profiles!leadership_couples_spouse2_id_fkey(id, name, avatar_url, email)
+          )
         `)
         .order('name');
       
