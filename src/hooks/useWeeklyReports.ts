@@ -87,9 +87,10 @@ export function useWeeklyReports(celulaId?: string, dateRange?: DateRangeFilter)
       }
       
       if (dateRange) {
-        // Filter by meeting_date if available, fallback to week_start
-        query = query.or(`meeting_date.gte.${dateRange.from},and(meeting_date.is.null,week_start.gte.${dateRange.from})`);
-        query = query.or(`meeting_date.lte.${dateRange.to},and(meeting_date.is.null,week_start.lte.${dateRange.to})`);
+        // Filter by actual meeting day when available; fallback to week_start (Monday)
+        query = query.or(
+          `and(meeting_date.gte.${dateRange.from},meeting_date.lte.${dateRange.to}),and(week_start.gte.${dateRange.from},week_start.lte.${dateRange.to})`
+        );
       }
       
       const { data, error } = await query;
@@ -126,9 +127,11 @@ export function useWeeklyReportsByCoordenacao(coordenacaoId?: string, dateRange?
         .order('meeting_date', { ascending: false, nullsFirst: false })
         .order('week_start', { ascending: false });
       
-      if (dateRange) {
-        query = query.gte('week_start', dateRange.from).lte('week_start', dateRange.to);
-      }
+       if (dateRange) {
+         query = query.or(
+           `and(meeting_date.gte.${dateRange.from},meeting_date.lte.${dateRange.to}),and(week_start.gte.${dateRange.from},week_start.lte.${dateRange.to})`
+         );
+       }
       
       const { data, error } = await query;
       if (error) throw error;
@@ -175,9 +178,11 @@ export function useWeeklyReportsByRede(redeId?: string, dateRange?: DateRangeFil
         .order('meeting_date', { ascending: false, nullsFirst: false })
         .order('week_start', { ascending: false });
       
-      if (dateRange) {
-        query = query.gte('week_start', dateRange.from).lte('week_start', dateRange.to);
-      }
+       if (dateRange) {
+         query = query.or(
+           `and(meeting_date.gte.${dateRange.from},meeting_date.lte.${dateRange.to}),and(week_start.gte.${dateRange.from},week_start.lte.${dateRange.to})`
+         );
+       }
       
       const { data, error } = await query;
       if (error) throw error;
@@ -238,6 +243,8 @@ export function useCreateWeeklyReport() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['weekly-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-reports-coordenacao'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-reports-rede'] });
     },
   });
 }
