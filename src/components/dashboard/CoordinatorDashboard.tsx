@@ -9,30 +9,40 @@ import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye, Clip
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useWeeklyReportsByCoordenacao } from '@/hooks/useWeeklyReports';
 import { useSupervisoesByCoordenacao } from '@/hooks/useSupervisoes';
-import { WeekSelector, getWeekStartString } from './WeekSelector';
+import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { CelulaPhotoGallery } from './CelulaPhotoGallery';
+import { subDays, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export function CoordinatorDashboard() {
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
   
   const [selectedCoordenacao, setSelectedCoordenacao] = useState<string>('');
-  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    from: subDays(new Date(), 6),
+    to: new Date()
+  });
   const [selectedCelula, setSelectedCelula] = useState<{ id: string; name: string } | null>(null);
-  const weekStart = getWeekStartString(selectedWeek);
-  const { data: reports, isLoading: reportsLoading } = useWeeklyReportsByCoordenacao(selectedCoordenacao);
+  
+  const dateRangeFilter = {
+    from: getDateString(dateRange.from),
+    to: getDateString(dateRange.to)
+  };
+  
+  const { data: reports, isLoading: reportsLoading } = useWeeklyReportsByCoordenacao(selectedCoordenacao, dateRangeFilter);
   const { data: supervisoes, isLoading: supervisoesLoading } = useSupervisoesByCoordenacao(selectedCoordenacao);
 
   // Show all coordenacoes in controlled environment
   const userCoordenacoes = coordenacoes || [];
 
-  // Filter reports for selected week
-  const currentWeekReports = reports?.filter(r => r.week_start === weekStart) || [];
+  // Use all reports in the date range (no week filtering needed)
+  const currentReports = reports || [];
 
   // Calculate totals
-  const totals = currentWeekReports.reduce((acc, report) => ({
+  const totals = currentReports.reduce((acc, report) => ({
     members_present: acc.members_present + report.members_present,
     leaders_in_training: acc.leaders_in_training + report.leaders_in_training,
     discipleships: acc.discipleships + report.discipleships,
@@ -74,8 +84,11 @@ export function CoordinatorDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Dashboard do Coordenador</h2>
+          <p className="text-sm text-muted-foreground">
+            Período: {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+          </p>
         </div>
-        <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
+        <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
       </div>
 
       <Card>
@@ -148,7 +161,7 @@ export function CoordinatorDashboard() {
                     Relatórios por Célula
                   </CardTitle>
                   <CardDescription>
-                    {currentWeekReports.length} célula(s) enviaram relatório nesta semana
+                    {currentReports.length} célula(s) enviaram relatório no período
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -156,11 +169,12 @@ export function CoordinatorDashboard() {
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-8 w-8 animate-spin text-primary" />
                     </div>
-                  ) : currentWeekReports.length > 0 ? (
+                  ) : currentReports.length > 0 ? (
                     <Table>
                       <TableHeader>
                         <TableRow>
                           <TableHead>Célula</TableHead>
+                          <TableHead className="text-center">Data</TableHead>
                           <TableHead className="text-center">Membros</TableHead>
                           <TableHead className="text-center">Líderes Trein.</TableHead>
                           <TableHead className="text-center">Discipulados</TableHead>
@@ -171,12 +185,16 @@ export function CoordinatorDashboard() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {currentWeekReports.map(report => {
+                        {currentReports.map(report => {
                           const total = report.members_present + report.leaders_in_training + 
                             report.discipleships + report.visitors + report.children;
+                          const reportDate = report.meeting_date || report.week_start;
                           return (
                             <TableRow key={report.id}>
                               <TableCell className="font-medium">{report.celula?.name}</TableCell>
+                              <TableCell className="text-center text-sm text-muted-foreground">
+                                {format(new Date(reportDate), "dd/MM/yyyy", { locale: ptBR })}
+                              </TableCell>
                               <TableCell className="text-center">{report.members_present}</TableCell>
                               <TableCell className="text-center">{report.leaders_in_training}</TableCell>
                               <TableCell className="text-center">{report.discipleships}</TableCell>
@@ -204,7 +222,7 @@ export function CoordinatorDashboard() {
                     </Table>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
-                      Nenhum relatório enviado nesta semana
+                      Nenhum relatório enviado no período
                     </div>
                   )}
                 </CardContent>

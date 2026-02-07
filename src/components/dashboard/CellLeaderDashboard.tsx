@@ -5,15 +5,20 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2, ClipboardList, Users2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2, ClipboardList, Users2, CalendarIcon } from 'lucide-react';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReports, useCreateWeeklyReport } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
-import { WeekSelector, getWeekStartString } from './WeekSelector';
+import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
 import { MembersList } from './cellleader/MembersList';
 import { CasaisManager } from './cellleader/CasaisManager';
 import { BirthdayAlert } from './BirthdayAlert';
 import { CelulaPhotoUpload } from './cellleader/CelulaPhotoUpload';
+import { format, subDays, startOfWeek } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 export function CellLeaderDashboard() {
   const { toast } = useToast();
@@ -21,11 +26,18 @@ export function CellLeaderDashboard() {
   const createReport = useCreateWeeklyReport();
   
   const [selectedCelula, setSelectedCelula] = useState<string>('');
-  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
-  const weekStart = getWeekStartString(selectedWeek);
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    from: subDays(new Date(), 6),
+    to: new Date()
+  });
+  const [meetingDate, setMeetingDate] = useState<Date>(new Date());
   
-  const { data: existingReports } = useWeeklyReports(selectedCelula);
-  const existingReport = existingReports?.find(r => r.week_start === weekStart);
+  const dateRangeFilter = {
+    from: getDateString(dateRange.from),
+    to: getDateString(dateRange.to)
+  };
+  
+  const { data: existingReports } = useWeeklyReports(selectedCelula, dateRangeFilter);
   
   const [formData, setFormData] = useState({
     members_present: 0,
@@ -37,10 +49,17 @@ export function CellLeaderDashboard() {
     photo_url: null as string | null,
   });
 
-  // Update form when celula or week changes
+  // Get week start from meeting date for database compatibility
+  const weekStart = getDateString(startOfWeek(meetingDate, { weekStartsOn: 1 }));
+  const meetingDateString = getDateString(meetingDate);
+
+  // Update form when celula or meeting date changes
   useEffect(() => {
     if (selectedCelula && existingReports) {
-      const report = existingReports.find(r => r.celula_id === selectedCelula && r.week_start === weekStart);
+      const report = existingReports.find(r => 
+        r.celula_id === selectedCelula && 
+        (r.meeting_date === meetingDateString || r.week_start === weekStart)
+      );
       if (report) {
         setFormData({
           members_present: report.members_present,
@@ -51,6 +70,9 @@ export function CellLeaderDashboard() {
           notes: report.notes || '',
           photo_url: report.photo_url || null,
         });
+        if (report.meeting_date) {
+          setMeetingDate(new Date(report.meeting_date));
+        }
       } else {
         setFormData({
           members_present: 0,
@@ -63,7 +85,7 @@ export function CellLeaderDashboard() {
         });
       }
     }
-  }, [selectedCelula, weekStart, existingReports]);
+  }, [selectedCelula, meetingDateString, weekStart, existingReports]);
 
   const handleCelulaChange = (celulaId: string) => {
     setSelectedCelula(celulaId);
@@ -85,6 +107,7 @@ export function CellLeaderDashboard() {
       await createReport.mutateAsync({
         celula_id: selectedCelula,
         week_start: weekStart,
+        meeting_date: meetingDateString,
         ...formData,
       });
       
@@ -170,8 +193,38 @@ export function CellLeaderDashboard() {
             {/* Birthday Alert */}
             <BirthdayAlert celulaId={selectedCelula} />
             
-            <div className="flex justify-end">
-              <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              {/* Meeting Date Picker */}
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-muted-foreground">Data da Célula:</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[200px] justify-start text-left font-normal"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(meetingDate, "dd/MM/yyyy", { locale: ptBR })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={meetingDate}
+                      onSelect={(date) => date && setMeetingDate(date)}
+                      disabled={(date) => date > new Date()}
+                      initialFocus
+                      locale={ptBR}
+                      className={cn("p-3 pointer-events-auto")}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              {/* Date Range Filter for history */}
+              <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
             </div>
             
             <form onSubmit={handleSubmit}>

@@ -11,12 +11,12 @@ import { useRedes } from '@/hooks/useRedes';
 import { useWeeklyReportsByRede, WeeklyReport } from '@/hooks/useWeeklyReports';
 import { useSupervisoesByRede } from '@/hooks/useSupervisoes';
 import { useToast } from '@/hooks/use-toast';
-import { WeekSelector, getWeekStartString } from './WeekSelector';
+import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { CelulaPhotoGallery } from './CelulaPhotoGallery';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function NetworkLeaderDashboard() {
@@ -24,12 +24,19 @@ export function NetworkLeaderDashboard() {
   const { data: redes, isLoading: redesLoading } = useRedes();
   
   const [selectedRede, setSelectedRede] = useState<string>('');
-  const [selectedWeek, setSelectedWeek] = useState<Date>(new Date());
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    from: subDays(new Date(), 6),
+    to: new Date()
+  });
   const [expandedCoords, setExpandedCoords] = useState<Set<string>>(new Set());
   const [selectedCelula, setSelectedCelula] = useState<{ id: string; name: string } | null>(null);
-  const weekStart = getWeekStartString(selectedWeek);
   
-  const { data: redeData, isLoading: reportsLoading } = useWeeklyReportsByRede(selectedRede);
+  const dateRangeFilter = {
+    from: getDateString(dateRange.from),
+    to: getDateString(dateRange.to)
+  };
+  
+  const { data: redeData, isLoading: reportsLoading } = useWeeklyReportsByRede(selectedRede, dateRangeFilter);
   const { data: supervisoes } = useSupervisoesByRede(selectedRede);
 
   const toggleCoord = (coordId: string) => {
@@ -47,8 +54,8 @@ export function NetworkLeaderDashboard() {
   // Show all redes in controlled environment
   const userRedes = redes || [];
 
-  // Filter reports for selected week
-  const currentWeekReports = redeData?.reports?.filter(r => r.week_start === weekStart) || [];
+  // Use all reports in the date range
+  const currentReports = redeData?.reports || [];
 
   // Define type for coordenacao data
   interface CoordenacaoData {
@@ -64,7 +71,7 @@ export function NetworkLeaderDashboard() {
   }
 
   // Group reports by coordenacao
-  const reportsByCoordenacao = currentWeekReports.reduce<Record<string, CoordenacaoData>>((acc, report) => {
+  const reportsByCoordenacao = currentReports.reduce<Record<string, CoordenacaoData>>((acc, report) => {
     const coordId = report.celula?.coordenacao_id;
     const coordName = report.celula?.coordenacao?.name || 'Sem Coordenação';
     if (!coordId) return acc;
@@ -108,14 +115,12 @@ export function NetworkLeaderDashboard() {
     children: 0,
   });
 
-  const formatWeekDisplay = () => {
-    const weekEnd = new Date(selectedWeek);
-    weekEnd.setDate(weekEnd.getDate() + 6);
-    return `${format(selectedWeek, "dd/MM/yyyy", { locale: ptBR })} - ${format(weekEnd, "dd/MM/yyyy", { locale: ptBR })}`;
+  const formatDateRangeDisplay = () => {
+    return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
   };
 
   const exportToCSV = () => {
-    if (!currentWeekReports.length) {
+    if (!currentReports.length) {
       toast({
         title: 'Aviso',
         description: 'Nenhum dado para exportar',
@@ -124,14 +129,16 @@ export function NetworkLeaderDashboard() {
       return;
     }
 
-    const headers = ['Coordenação', 'Célula', 'Membros Presentes', 'Líderes em Treinamento', 'Discipulados', 'Visitantes', 'Crianças', 'Total'];
+    const headers = ['Coordenação', 'Célula', 'Data', 'Membros Presentes', 'Líderes em Treinamento', 'Discipulados', 'Visitantes', 'Crianças', 'Total'];
     
-    const rows = currentWeekReports.map(report => {
+    const rows = currentReports.map(report => {
       const total = report.members_present + report.leaders_in_training + 
         report.discipleships + report.visitors + report.children;
+      const reportDate = report.meeting_date || report.week_start;
       return [
         report.celula?.coordenacao?.name || '',
         report.celula?.name || '',
+        format(new Date(reportDate), "dd/MM/yyyy", { locale: ptBR }),
         report.members_present,
         report.leaders_in_training,
         report.discipleships,
@@ -148,6 +155,7 @@ export function NetworkLeaderDashboard() {
       rows.push([
         `TOTAL ${coord.name}`,
         '',
+        '',
         coord.totals.members_present,
         coord.totals.leaders_in_training,
         coord.totals.discipleships,
@@ -163,6 +171,7 @@ export function NetworkLeaderDashboard() {
     rows.push([
       'TOTAL GERAL',
       '',
+      '',
       grandTotals.members_present,
       grandTotals.leaders_in_training,
       grandTotals.discipleships,
@@ -172,7 +181,7 @@ export function NetworkLeaderDashboard() {
     ]);
 
     const csvContent = [
-      `Relatório da Rede - Semana ${formatWeekDisplay()}`,
+      `Relatório da Rede - Período ${formatDateRangeDisplay()}`,
       '',
       headers.join(','),
       ...rows.map(row => row.join(','))
@@ -181,7 +190,7 @@ export function NetworkLeaderDashboard() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_rede_${weekStart}.csv`;
+    link.download = `relatorio_rede_${dateRangeFilter.from}_${dateRangeFilter.to}.csv`;
     link.click();
     
     toast({
@@ -212,10 +221,13 @@ export function NetworkLeaderDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Dashboard do Líder de Rede</h2>
+          <p className="text-sm text-muted-foreground">
+            Período: {formatDateRangeDisplay()}
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
-          {selectedRede && currentWeekReports.length > 0 && (
+          <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
+          {selectedRede && currentReports.length > 0 && (
             <Button onClick={exportToCSV} variant="outline">
               <Download className="h-4 w-4 mr-2" />
               Exportar CSV
@@ -388,7 +400,7 @@ export function NetworkLeaderDashboard() {
                             <div>
                               <p className="font-bold">TOTAL GERAL</p>
                               <p className="text-sm text-muted-foreground">
-                                {currentWeekReports.length} célula(s) com relatório
+                                {currentReports.length} célula(s) com relatório
                               </p>
                             </div>
                             <div className="flex items-center gap-4 text-sm">

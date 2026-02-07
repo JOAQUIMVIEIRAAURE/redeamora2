@@ -644,6 +644,7 @@ export type Database = {
           discipleships: number
           id: string
           leaders_in_training: number
+          meeting_date: string | null
           members_present: number
           notes: string | null
           photo_url: string | null
@@ -659,6 +660,7 @@ export type Database = {
           discipleships?: number
           id?: string
           leaders_in_training?: number
+          meeting_date?: string | null
           members_present?: number
           notes?: string | null
           photo_url?: string | null
@@ -674,6 +676,7 @@ export type Database = {
           discipleships?: number
           id?: string
           leaders_in_training?: number
+          meeting_date?: string | null
           members_present?: number
           notes?: string | null
           photo_url?: string | null
