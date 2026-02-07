@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye, ClipboardCheck, Image, FileSpreadsheet } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye, ClipboardCheck, Image, FileSpreadsheet, Sparkles } from 'lucide-react';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReportsByCoordenacao } from '@/hooks/useWeeklyReports';
@@ -16,6 +16,7 @@ import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { CelulaPhotoGallery } from './CelulaPhotoGallery';
+import { AIInsightsPanel } from './AIInsightsPanel';
 import { exportToExcel } from '@/utils/exportReports';
 import { subDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -179,10 +180,14 @@ export function CoordinatorDashboard() {
           </div>
 
           <Tabs defaultValue="relatorios" className="space-y-4">
-            <TabsList>
+            <TabsList className="flex flex-wrap h-auto gap-1">
               <TabsTrigger value="relatorios" className="flex items-center gap-2">
                 <LayoutGrid className="h-4 w-4" />
                 Relatórios
+              </TabsTrigger>
+              <TabsTrigger value="insights" className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                Insights IA
               </TabsTrigger>
               <TabsTrigger value="fotos" className="flex items-center gap-2">
                 <Image className="h-4 w-4" />
@@ -195,6 +200,14 @@ export function CoordinatorDashboard() {
                 </TabsTrigger>
               )}
             </TabsList>
+
+            <TabsContent value="insights">
+              <AIInsightsPanel 
+                reports={currentReports} 
+                periodLabel={formatDateRangeDisplay()}
+                context="coordenacao"
+              />
+            </TabsContent>
 
             <TabsContent value="relatorios">
               {/* Cells Table */}
