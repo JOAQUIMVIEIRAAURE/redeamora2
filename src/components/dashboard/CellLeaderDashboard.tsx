@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2, ClipboardList, Users2, CalendarIcon } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2, ClipboardList, Users2, CalendarIcon, Image } from 'lucide-react';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReports, useCreateWeeklyReport } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,7 @@ import { MembersList } from './cellleader/MembersList';
 import { CasaisManager } from './cellleader/CasaisManager';
 import { BirthdayAlert } from './BirthdayAlert';
 import { CelulaPhotoUpload } from './cellleader/CelulaPhotoUpload';
+import { CellLeaderPhotosTab } from './cellleader/CellLeaderPhotosTab';
 import { format, subDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -37,7 +38,7 @@ export function CellLeaderDashboard() {
     to: getDateString(dateRange.to)
   };
   
-  const { data: existingReports } = useWeeklyReports(selectedCelula, dateRangeFilter);
+  const { data: existingReports, isLoading: reportsLoading } = useWeeklyReports(selectedCelula, dateRangeFilter);
   
   const [formData, setFormData] = useState({
     members_present: 0,
@@ -174,7 +175,7 @@ export function CellLeaderDashboard() {
 
       {selectedCelula ? (
         <Tabs defaultValue="relatorio" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="relatorio" className="flex items-center gap-2">
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Relatório</span>
@@ -186,6 +187,10 @@ export function CellLeaderDashboard() {
             <TabsTrigger value="casais" className="flex items-center gap-2">
               <Users2 className="h-4 w-4" />
               <span className="hidden sm:inline">Casais</span>
+            </TabsTrigger>
+            <TabsTrigger value="fotos" className="flex items-center gap-2">
+              <Image className="h-4 w-4" />
+              <span className="hidden sm:inline">Fotos</span>
             </TabsTrigger>
           </TabsList>
 
@@ -291,6 +296,10 @@ export function CellLeaderDashboard() {
 
           <TabsContent value="casais">
             <CasaisManager celulaId={selectedCelula} />
+          </TabsContent>
+
+          <TabsContent value="fotos">
+            <CellLeaderPhotosTab reports={existingReports || []} isLoading={reportsLoading} />
           </TabsContent>
         </Tabs>
       ) : (
