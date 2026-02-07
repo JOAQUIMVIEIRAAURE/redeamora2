@@ -14,6 +14,7 @@ import { Loader2 } from 'lucide-react';
 const formSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
+  birth_date: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -34,6 +35,7 @@ export function MemberFormDialogSimple({ open, onOpenChange, celulaId }: MemberF
     defaultValues: {
       name: '',
       email: '',
+      birth_date: '',
     },
   });
   
@@ -47,6 +49,7 @@ export function MemberFormDialogSimple({ open, onOpenChange, celulaId }: MemberF
           name: data.name,
           email: data.email || null,
           user_id: crypto.randomUUID(), // Generate a placeholder user_id
+          birth_date: data.birth_date || null,
         })
         .select()
         .single();
@@ -104,6 +107,20 @@ export function MemberFormDialogSimple({ open, onOpenChange, celulaId }: MemberF
                   <FormLabel>Email (opcional)</FormLabel>
                   <FormControl>
                     <Input placeholder="email@exemplo.com" type="email" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="birth_date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data de Nascimento (opcional)</FormLabel>
+                  <FormControl>
+                    <Input type="date" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

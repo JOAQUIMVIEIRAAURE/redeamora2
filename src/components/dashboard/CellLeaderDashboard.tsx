@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { WeekSelector, getWeekStartString } from './WeekSelector';
 import { MembersList } from './cellleader/MembersList';
 import { CasaisManager } from './cellleader/CasaisManager';
+import { BirthdayAlert } from './BirthdayAlert';
 
 export function CellLeaderDashboard() {
   const { toast } = useToast();
@@ -162,6 +163,9 @@ export function CellLeaderDashboard() {
           </TabsList>
 
           <TabsContent value="relatorio" className="space-y-4">
+            {/* Birthday Alert */}
+            <BirthdayAlert celulaId={selectedCelula} />
+            
             <div className="flex justify-end">
               <WeekSelector selectedWeek={selectedWeek} onWeekChange={setSelectedWeek} />
             </div>
