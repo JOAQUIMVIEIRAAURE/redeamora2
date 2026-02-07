@@ -2,19 +2,20 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useCreateMember } from '@/hooks/useMembers';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Cake, Church } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
   birth_date: z.string().optional(),
+  joined_church_at: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -36,6 +37,7 @@ export function MemberFormDialogSimple({ open, onOpenChange, celulaId }: MemberF
       name: '',
       email: '',
       birth_date: '',
+      joined_church_at: '',
     },
   });
   
@@ -48,8 +50,9 @@ export function MemberFormDialogSimple({ open, onOpenChange, celulaId }: MemberF
         .insert({
           name: data.name,
           email: data.email || null,
-          user_id: crypto.randomUUID(), // Generate a placeholder user_id
+          user_id: crypto.randomUUID(),
           birth_date: data.birth_date || null,
+          joined_church_at: data.joined_church_at || null,
         })
         .select()
         .single();
@@ -78,7 +81,7 @@ export function MemberFormDialogSimple({ open, onOpenChange, celulaId }: MemberF
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Adicionar Novo Membro</DialogTitle>
         </DialogHeader>
@@ -113,19 +116,41 @@ export function MemberFormDialogSimple({ open, onOpenChange, celulaId }: MemberF
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="birth_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data de Nascimento (opcional)</FormLabel>
-                  <FormControl>
-                    <Input type="date" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="birth_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <Cake className="h-4 w-4" />
+                      Nascimento
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="joined_church_at"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <Church className="h-4 w-4" />
+                      Entrada na Igreja
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
