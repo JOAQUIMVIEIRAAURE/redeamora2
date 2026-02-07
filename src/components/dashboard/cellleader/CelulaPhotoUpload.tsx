@@ -32,11 +32,11 @@ export function CelulaPhotoUpload({ photoUrl, onPhotoChange, celulaId, weekStart
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
       toast({
         title: 'Arquivo muito grande',
-        description: 'O tamanho máximo é 5MB',
+        description: 'O tamanho máximo é 10MB',
         variant: 'destructive',
       });
       return;
@@ -136,7 +136,7 @@ export function CelulaPhotoUpload({ photoUrl, onPhotoChange, celulaId, weekStart
                 Clique para adicionar uma foto da célula
               </p>
               <p className="text-xs text-muted-foreground">
-                Máximo 5MB • JPG, PNG
+                Máximo 10MB • JPG, PNG
               </p>
             </div>
           )}
