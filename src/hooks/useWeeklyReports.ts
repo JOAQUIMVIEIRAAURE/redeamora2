@@ -196,14 +196,45 @@ export function useCreateWeeklyReport() {
   
   return useMutation({
     mutationFn: async (input: WeeklyReportInput) => {
-      const { data, error } = await supabase
+      // First, check if a report already exists for this celula and week_start
+      const { data: existingReport } = await supabase
         .from('weekly_reports')
-        .upsert(input, { onConflict: 'celula_id,week_start' })
-        .select()
-        .single();
+        .select('id')
+        .eq('celula_id', input.celula_id)
+        .eq('week_start', input.week_start)
+        .maybeSingle();
       
-      if (error) throw error;
-      return data;
+      if (existingReport) {
+        // Update existing report
+        const { data, error } = await supabase
+          .from('weekly_reports')
+          .update({
+            meeting_date: input.meeting_date,
+            members_present: input.members_present,
+            leaders_in_training: input.leaders_in_training,
+            discipleships: input.discipleships,
+            visitors: input.visitors,
+            children: input.children,
+            notes: input.notes,
+            photo_url: input.photo_url,
+          })
+          .eq('id', existingReport.id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return data;
+      } else {
+        // Insert new report
+        const { data, error } = await supabase
+          .from('weekly_reports')
+          .insert(input)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        return data;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['weekly-reports'] });
