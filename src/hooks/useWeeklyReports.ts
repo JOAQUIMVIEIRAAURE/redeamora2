@@ -5,6 +5,7 @@ export interface WeeklyReport {
   id: string;
   celula_id: string;
   week_start: string;
+  meeting_date: string | null;
   members_present: number;
   leaders_in_training: number;
   discipleships: number;
@@ -34,6 +35,7 @@ export interface WeeklyReport {
 export interface WeeklyReportInput {
   celula_id: string;
   week_start: string;
+  meeting_date?: string | null;
   members_present: number;
   leaders_in_training: number;
   discipleships: number;
@@ -41,6 +43,11 @@ export interface WeeklyReportInput {
   children: number;
   notes?: string;
   photo_url?: string | null;
+}
+
+export interface DateRangeFilter {
+  from: string;
+  to: string;
 }
 
 // Get current week's Monday
@@ -52,9 +59,9 @@ export function getCurrentWeekStart(): string {
   return monday.toISOString().split('T')[0];
 }
 
-export function useWeeklyReports(celulaId?: string) {
+export function useWeeklyReports(celulaId?: string, dateRange?: DateRangeFilter) {
   return useQuery({
-    queryKey: ['weekly-reports', celulaId],
+    queryKey: ['weekly-reports', celulaId, dateRange?.from, dateRange?.to],
     queryFn: async () => {
       let query = supabase
         .from('weekly_reports')
@@ -72,10 +79,17 @@ export function useWeeklyReports(celulaId?: string) {
             )
           )
         `)
+        .order('meeting_date', { ascending: false, nullsFirst: false })
         .order('week_start', { ascending: false });
       
       if (celulaId) {
         query = query.eq('celula_id', celulaId);
+      }
+      
+      if (dateRange) {
+        // Filter by meeting_date if available, fallback to week_start
+        query = query.or(`meeting_date.gte.${dateRange.from},and(meeting_date.is.null,week_start.gte.${dateRange.from})`);
+        query = query.or(`meeting_date.lte.${dateRange.to},and(meeting_date.is.null,week_start.lte.${dateRange.to})`);
       }
       
       const { data, error } = await query;
@@ -85,9 +99,9 @@ export function useWeeklyReports(celulaId?: string) {
   });
 }
 
-export function useWeeklyReportsByCoordenacao(coordenacaoId?: string) {
+export function useWeeklyReportsByCoordenacao(coordenacaoId?: string, dateRange?: DateRangeFilter) {
   return useQuery({
-    queryKey: ['weekly-reports-coordenacao', coordenacaoId],
+    queryKey: ['weekly-reports-coordenacao', coordenacaoId, dateRange?.from, dateRange?.to],
     queryFn: async () => {
       const { data: celulas } = await supabase
         .from('celulas')
@@ -98,7 +112,7 @@ export function useWeeklyReportsByCoordenacao(coordenacaoId?: string) {
       
       const celulaIds = celulas.map(c => c.id);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('weekly_reports')
         .select(`
           *,
@@ -109,8 +123,14 @@ export function useWeeklyReportsByCoordenacao(coordenacaoId?: string) {
           )
         `)
         .in('celula_id', celulaIds)
+        .order('meeting_date', { ascending: false, nullsFirst: false })
         .order('week_start', { ascending: false });
       
+      if (dateRange) {
+        query = query.gte('week_start', dateRange.from).lte('week_start', dateRange.to);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data as unknown as WeeklyReport[];
     },
@@ -118,9 +138,9 @@ export function useWeeklyReportsByCoordenacao(coordenacaoId?: string) {
   });
 }
 
-export function useWeeklyReportsByRede(redeId?: string) {
+export function useWeeklyReportsByRede(redeId?: string, dateRange?: DateRangeFilter) {
   return useQuery({
-    queryKey: ['weekly-reports-rede', redeId],
+    queryKey: ['weekly-reports-rede', redeId, dateRange?.from, dateRange?.to],
     queryFn: async () => {
       const { data: coordenacoes } = await supabase
         .from('coordenacoes')
@@ -140,7 +160,7 @@ export function useWeeklyReportsByRede(redeId?: string) {
       
       const celulaIds = celulas.map(c => c.id);
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('weekly_reports')
         .select(`
           *,
@@ -152,8 +172,14 @@ export function useWeeklyReportsByRede(redeId?: string) {
           )
         `)
         .in('celula_id', celulaIds)
+        .order('meeting_date', { ascending: false, nullsFirst: false })
         .order('week_start', { ascending: false });
       
+      if (dateRange) {
+        query = query.gte('week_start', dateRange.from).lte('week_start', dateRange.to);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return { 
         reports: data as unknown as WeeklyReport[], 

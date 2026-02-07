@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -6,21 +7,34 @@ import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download, La
 import { useRedes } from '@/hooks/useRedes';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useCelulas } from '@/hooks/useCelulas';
-import { useWeeklyReports, getCurrentWeekStart, WeeklyReport } from '@/hooks/useWeeklyReports';
+import { useWeeklyReports, WeeklyReport, DateRangeFilter } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
+import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
+import { format, subDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export function AdminDashboard() {
   const { toast } = useToast();
   const { data: redes, isLoading: redesLoading } = useRedes();
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
   const { data: celulas, isLoading: celulasLoading } = useCelulas();
-  const { data: allReports, isLoading: reportsLoading } = useWeeklyReports();
   
-  const weekStart = getCurrentWeekStart();
+  const [dateRange, setDateRange] = useState<DateRangeValue>({
+    from: subDays(new Date(), 6),
+    to: new Date()
+  });
+  
+  const dateRangeFilter: DateRangeFilter = {
+    from: getDateString(dateRange.from),
+    to: getDateString(dateRange.to)
+  };
+  
+  const { data: allReports, isLoading: reportsLoading } = useWeeklyReports(undefined, dateRangeFilter);
+  
   const isLoading = redesLoading || coordenacoesLoading || celulasLoading || reportsLoading;
 
-  // Filter reports for current week
-  const currentWeekReports = allReports?.filter(r => r.week_start === weekStart) || [];
+  // Use all reports in the date range
+  const currentReports = allReports || [];
 
   // Define type for rede data
   interface RedeData {
@@ -37,7 +51,7 @@ export function AdminDashboard() {
   }
 
   // Group reports by rede
-  const reportsByRede = currentWeekReports.reduce<Record<string, RedeData>>((acc, report) => {
+  const reportsByRede = currentReports.reduce<Record<string, RedeData>>((acc, report) => {
     const redeId = report.celula?.coordenacao?.rede?.id;
     const redeName = report.celula?.coordenacao?.rede?.name || 'Sem Rede';
     const coordId = report.celula?.coordenacao_id;
@@ -87,15 +101,12 @@ export function AdminDashboard() {
     children: 0,
   });
 
-  const formatWeekDisplay = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const endDate = new Date(date);
-    endDate.setDate(endDate.getDate() + 6);
-    return `${date.toLocaleDateString('pt-BR')} - ${endDate.toLocaleDateString('pt-BR')}`;
+  const formatDateRangeDisplay = () => {
+    return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
   };
 
   const exportToCSV = () => {
-    if (!currentWeekReports.length) {
+    if (!currentReports.length) {
       toast({
         title: 'Aviso',
         description: 'Nenhum dado para exportar',
@@ -104,15 +115,17 @@ export function AdminDashboard() {
       return;
     }
 
-    const headers = ['Rede', 'Coordenação', 'Célula', 'Membros Presentes', 'Líderes em Treinamento', 'Discipulados', 'Visitantes', 'Crianças', 'Total'];
+    const headers = ['Rede', 'Coordenação', 'Célula', 'Data', 'Membros Presentes', 'Líderes em Treinamento', 'Discipulados', 'Visitantes', 'Crianças', 'Total'];
     
-    const rows = currentWeekReports.map(report => {
+    const rows = currentReports.map(report => {
       const total = report.members_present + report.leaders_in_training + 
         report.discipleships + report.visitors + report.children;
+      const reportDate = report.meeting_date || report.week_start;
       return [
         report.celula?.coordenacao?.rede?.name || '',
         report.celula?.coordenacao?.name || '',
         report.celula?.name || '',
+        format(new Date(reportDate), "dd/MM/yyyy", { locale: ptBR }),
         report.members_present,
         report.leaders_in_training,
         report.discipleships,
@@ -129,6 +142,7 @@ export function AdminDashboard() {
       'TOTAL GERAL',
       '',
       '',
+      '',
       grandTotals.members_present,
       grandTotals.leaders_in_training,
       grandTotals.discipleships,
@@ -138,7 +152,7 @@ export function AdminDashboard() {
     ]);
 
     const csvContent = [
-      `Relatório Geral - Semana ${formatWeekDisplay(weekStart)}`,
+      `Relatório Geral - Período ${formatDateRangeDisplay()}`,
       '',
       headers.join(','),
       ...rows.map(row => row.join(','))
@@ -147,7 +161,7 @@ export function AdminDashboard() {
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_geral_${weekStart}.csv`;
+    link.download = `relatorio_geral_${dateRangeFilter.from}_${dateRangeFilter.to}.csv`;
     link.click();
     
     toast({
@@ -180,17 +194,20 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between flex-wrap gap-4">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Dashboard Administrativo</h2>
-          <p className="text-muted-foreground">Semana: {formatWeekDisplay(weekStart)}</p>
+          <p className="text-muted-foreground">Período: {formatDateRangeDisplay()}</p>
         </div>
-        {currentWeekReports.length > 0 && (
-          <Button onClick={exportToCSV} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Exportar para CSV
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
+          {currentReports.length > 0 && (
+            <Button onClick={exportToCSV} variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Exportar para CSV
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Main Stats Cards */}
@@ -286,7 +303,7 @@ export function AdminDashboard() {
                     <Badge variant="outline">{coordenacoes?.length || 0}</Badge>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge variant="outline">{currentWeekReports.length}</Badge>
+                    <Badge variant="outline">{currentReports.length}</Badge>
                   </TableCell>
                   <TableCell className="text-center">{grandTotals.members_present}</TableCell>
                   <TableCell className="text-center">{grandTotals.leaders_in_training}</TableCell>
