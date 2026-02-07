@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Home as HomeIcon, FolderTree, Network, Shield, ClipboardCheck } from 'lucide-react';
-
-type RoleType = 'admin' | 'rede_leader' | 'coordenador' | 'supervisor' | 'celula_leader';
+import { Home as HomeIcon, FolderTree, Network, Shield, ClipboardCheck, Lock } from 'lucide-react';
+import { AccessCodeDialog } from '@/components/access/AccessCodeDialog';
+import { ACCESS_CODES, requiresAccessCode, type RoleType } from '@/config/accessCodes';
 
 const roleOptions: Array<{
   role: RoleType;
@@ -53,11 +54,34 @@ const roleOptions: Array<{
 export default function HomePage() {
   const navigate = useNavigate();
   const { setSelectedRole } = useRole();
+  const [accessDialogOpen, setAccessDialogOpen] = useState(false);
+  const [selectedRoleForAccess, setSelectedRoleForAccess] = useState<RoleType | null>(null);
 
   const handleRoleSelect = (role: RoleType) => {
-    setSelectedRole(role);
-    navigate('/dashboard');
+    if (requiresAccessCode(role)) {
+      setSelectedRoleForAccess(role);
+      setAccessDialogOpen(true);
+    } else {
+      // Acesso direto sem código (apenas Líder de Célula)
+      setSelectedRole(role);
+      navigate('/dashboard');
+    }
   };
+
+  const handleAccessSuccess = () => {
+    if (selectedRoleForAccess) {
+      setSelectedRole(selectedRoleForAccess);
+      navigate('/dashboard');
+    }
+  };
+
+  const selectedRoleTitle = selectedRoleForAccess 
+    ? roleOptions.find(r => r.role === selectedRoleForAccess)?.title || ''
+    : '';
+
+  const selectedRoleCode = selectedRoleForAccess 
+    ? ACCESS_CODES[selectedRoleForAccess] || ''
+    : '';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
@@ -75,6 +99,8 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {roleOptions.map((option) => {
             const IconComponent = option.icon;
+            const needsCode = requiresAccessCode(option.role);
+            
             return (
               <Card 
                 key={option.role} 
@@ -86,7 +112,12 @@ export default function HomePage() {
                     <div className={`p-3 rounded-lg ${option.colorClass} text-white`}>
                       <IconComponent className="h-6 w-6" />
                     </div>
-                    <CardTitle className="text-xl">{option.title}</CardTitle>
+                    <div className="flex items-center gap-2 flex-1">
+                      <CardTitle className="text-xl">{option.title}</CardTitle>
+                      {needsCode && (
+                        <Lock className="h-4 w-4 text-muted-foreground" aria-label="Requer código de acesso" />
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -100,7 +131,14 @@ export default function HomePage() {
                       handleRoleSelect(option.role);
                     }}
                   >
-                    Acessar
+                    {needsCode ? (
+                      <span className="flex items-center gap-2">
+                        <Lock className="h-4 w-4" />
+                        Acessar
+                      </span>
+                    ) : (
+                      'Acessar'
+                    )}
                   </Button>
                 </CardContent>
               </Card>
@@ -109,9 +147,17 @@ export default function HomePage() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-8">
-          Ambiente controlado - Selecione seu papel para acessar o sistema
+          🔒 Áreas administrativas protegidas por código de acesso
         </p>
       </div>
+
+      <AccessCodeDialog
+        open={accessDialogOpen}
+        onOpenChange={setAccessDialogOpen}
+        roleTitle={selectedRoleTitle}
+        onSuccess={handleAccessSuccess}
+        accessCode={selectedRoleCode}
+      />
     </div>
   );
 }
