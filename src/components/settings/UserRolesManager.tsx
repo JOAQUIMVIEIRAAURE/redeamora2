@@ -9,9 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Loader2, Plus, Trash2, Shield, Network, FolderTree, Home, ClipboardCheck, UserPlus, Users } from 'lucide-react';
+import { Loader2, Plus, Trash2, Shield, Network, FolderTree, Home, ClipboardCheck, UserPlus, Users, Save } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useSupervisores, useCreateSupervisor, useDeleteSupervisor } from '@/hooks/useSupervisoes';
@@ -37,26 +38,48 @@ interface Profile {
   user_id: string;
 }
 
+interface ProfileWithRoles extends Profile {
+  roles: AppRole[];
+}
+
 export function UserRolesManager() {
   const queryClient = useQueryClient();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
   const [newProfileEmail, setNewProfileEmail] = useState('');
-  const [selectedProfileForRole, setSelectedProfileForRole] = useState<string>('');
-  const [selectedRole, setSelectedRole] = useState<AppRole | ''>('');
   const [selectedProfileForSupervisor, setSelectedProfileForSupervisor] = useState<string>('');
   const [selectedCoordenacao, setSelectedCoordenacao] = useState<string>('');
+  const [pendingRoleChanges, setPendingRoleChanges] = useState<Record<string, AppRole[]>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch all profiles
-  const { data: profiles, isLoading: profilesLoading } = useQuery({
-    queryKey: ['profiles'],
+  // Fetch all profiles with their roles
+  const { data: profilesWithRoles, isLoading: profilesLoading } = useQuery({
+    queryKey: ['profiles-with-roles'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .order('name');
-      if (error) throw error;
-      return data as Profile[];
+      if (profilesError) throw profilesError;
+
+      const { data: userRoles, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('*');
+      if (rolesError) throw rolesError;
+
+      // Map roles to profiles by user_id
+      const rolesByUserId: Record<string, AppRole[]> = {};
+      userRoles?.forEach(ur => {
+        if (!rolesByUserId[ur.user_id]) {
+          rolesByUserId[ur.user_id] = [];
+        }
+        rolesByUserId[ur.user_id].push(ur.role as AppRole);
+      });
+
+      return (profiles || []).map(profile => ({
+        ...profile,
+        roles: rolesByUserId[profile.user_id] || [],
+      })) as ProfileWithRoles[];
     },
   });
 
@@ -73,7 +96,7 @@ export function UserRolesManager() {
         .insert({
           name: data.name,
           email: data.email || null,
-          user_id: crypto.randomUUID(), // Generate a random UUID for the user_id
+          user_id: crypto.randomUUID(),
         })
         .select()
         .single();
@@ -81,7 +104,7 @@ export function UserRolesManager() {
       return profile;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles-with-roles'] });
       toast({ title: 'Sucesso!', description: 'Perfil criado com sucesso.' });
       setNewProfileName('');
       setNewProfileEmail('');
@@ -102,7 +125,7 @@ export function UserRolesManager() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles-with-roles'] });
       queryClient.invalidateQueries({ queryKey: ['supervisores'] });
       toast({ title: 'Sucesso!', description: 'Perfil removido com sucesso.' });
     },
@@ -116,10 +139,83 @@ export function UserRolesManager() {
     createProfile.mutate({ name: newProfileName, email: newProfileEmail });
   };
 
+  // Get current roles for a profile (considering pending changes)
+  const getCurrentRoles = (profile: ProfileWithRoles): AppRole[] => {
+    return pendingRoleChanges[profile.user_id] ?? profile.roles;
+  };
+
+  // Toggle a role for a profile
+  const toggleRole = (profile: ProfileWithRoles, role: AppRole) => {
+    const currentRoles = getCurrentRoles(profile);
+    let newRoles: AppRole[];
+    
+    if (currentRoles.includes(role)) {
+      newRoles = currentRoles.filter(r => r !== role);
+    } else {
+      newRoles = [...currentRoles, role];
+    }
+    
+    setPendingRoleChanges(prev => ({
+      ...prev,
+      [profile.user_id]: newRoles,
+    }));
+  };
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = Object.keys(pendingRoleChanges).length > 0;
+
+  // Save all role changes
+  const saveRoleChanges = async () => {
+    setIsSaving(true);
+    try {
+      for (const [userId, newRoles] of Object.entries(pendingRoleChanges)) {
+        const profile = profilesWithRoles?.find(p => p.user_id === userId);
+        if (!profile) continue;
+
+        const oldRoles = profile.roles;
+        
+        // Roles to add
+        const rolesToAdd = newRoles.filter(r => !oldRoles.includes(r));
+        // Roles to remove
+        const rolesToRemove = oldRoles.filter(r => !newRoles.includes(r));
+
+        // Add new roles
+        for (const role of rolesToAdd) {
+          const { error } = await supabase
+            .from('user_roles')
+            .insert({ user_id: userId, role });
+          if (error) throw error;
+        }
+
+        // Remove old roles
+        for (const role of rolesToRemove) {
+          const { error } = await supabase
+            .from('user_roles')
+            .delete()
+            .eq('user_id', userId)
+            .eq('role', role);
+          if (error) throw error;
+        }
+      }
+
+      setPendingRoleChanges({});
+      queryClient.invalidateQueries({ queryKey: ['profiles-with-roles'] });
+      toast({ title: 'Sucesso!', description: 'Papéis atualizados com sucesso.' });
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Cancel pending changes
+  const cancelChanges = () => {
+    setPendingRoleChanges({});
+  };
+
   const handleAddSupervisor = async () => {
     if (!selectedProfileForSupervisor || !selectedCoordenacao) return;
     
-    // Check if already exists
     const exists = supervisores?.some(
       s => s.profile_id === selectedProfileForSupervisor && s.coordenacao_id === selectedCoordenacao
     );
@@ -158,7 +254,7 @@ export function UserRolesManager() {
         <TabsList>
           <TabsTrigger value="profiles" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Perfis
+            Perfis e Papéis
           </TabsTrigger>
           <TabsTrigger value="supervisores" className="flex items-center gap-2">
             <ClipboardCheck className="h-4 w-4" />
@@ -166,7 +262,7 @@ export function UserRolesManager() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Profiles Tab */}
+        {/* Profiles & Roles Tab */}
         <TabsContent value="profiles">
           <Card>
             <CardHeader>
@@ -174,61 +270,102 @@ export function UserRolesManager() {
                 <div>
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
-                    Gestão de Perfis
+                    Gestão de Perfis e Papéis
                   </CardTitle>
                   <CardDescription>
-                    Cadastre perfis para líderes, coordenadores e supervisores
+                    Cadastre perfis e atribua papéis (Admin, Líder de Rede, Coordenador, Supervisor, Líder de Célula)
                   </CardDescription>
                 </div>
-                <Button onClick={() => setIsCreateDialogOpen(true)}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Novo Perfil
-                </Button>
+                <div className="flex items-center gap-2">
+                  {hasUnsavedChanges && (
+                    <>
+                      <Button variant="outline" onClick={cancelChanges}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={saveRoleChanges} disabled={isSaving}>
+                        {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar Alterações
+                      </Button>
+                    </>
+                  )}
+                  <Button onClick={() => setIsCreateDialogOpen(true)}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Novo Perfil
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
+              {hasUnsavedChanges && (
+                <div className="mb-4 p-3 bg-secondary border border-border rounded-lg text-secondary-foreground text-sm">
+                  ⚠️ Você tem alterações não salvas. Clique em "Salvar Alterações" para aplicar.
+                </div>
+              )}
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Perfil</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    {allRoles.map(role => (
+                      <TableHead key={role} className="text-center w-28">
+                        <div className="flex flex-col items-center gap-1">
+                          {roleLabels[role].icon}
+                          <span className="text-xs">{roleLabels[role].label}</span>
+                        </div>
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-right w-20">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {profiles?.map((profile) => (
-                    <TableRow key={profile.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              {profile.name.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{profile.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {profile.email || '-'}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (confirm(`Remover perfil "${profile.name}"?`)) {
-                              deleteProfile.mutate(profile.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {(!profiles || profiles.length === 0) && (
+                  {profilesWithRoles?.map((profile) => {
+                    const currentRoles = getCurrentRoles(profile);
+                    const hasChanges = pendingRoleChanges[profile.user_id] !== undefined;
+                    
+                    return (
+                      <TableRow key={profile.id} className={hasChanges ? 'bg-muted/50' : ''}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback>
+                                {profile.name.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <span className="font-medium">{profile.name}</span>
+                              {profile.email && (
+                                <p className="text-xs text-muted-foreground">{profile.email}</p>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        {allRoles.map(role => (
+                          <TableCell key={role} className="text-center">
+                            <Checkbox
+                              checked={currentRoles.includes(role)}
+                              onCheckedChange={() => toggleRole(profile, role)}
+                            />
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (confirm(`Remover perfil "${profile.name}"?`)) {
+                                deleteProfile.mutate(profile.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {(!profilesWithRoles || profilesWithRoles.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={allRoles.length + 2} className="text-center text-muted-foreground py-8">
                         Nenhum perfil cadastrado
                       </TableCell>
                     </TableRow>
@@ -263,7 +400,7 @@ export function UserRolesManager() {
                           <SelectValue placeholder="Selecione um perfil" />
                         </SelectTrigger>
                         <SelectContent>
-                          {profiles?.map(profile => (
+                          {profilesWithRoles?.map(profile => (
                             <SelectItem key={profile.id} value={profile.id}>
                               {profile.name}
                             </SelectItem>
