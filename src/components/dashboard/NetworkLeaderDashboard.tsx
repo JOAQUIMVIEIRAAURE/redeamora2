@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download, ChevronDown, ChevronUp, Eye, ClipboardCheck } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download, ChevronDown, ChevronUp, Eye, ClipboardCheck, Image } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
 import { useWeeklyReportsByRede, WeeklyReport } from '@/hooks/useWeeklyReports';
 import { useSupervisoesByRede } from '@/hooks/useSupervisoes';
@@ -14,6 +15,7 @@ import { WeekSelector, getWeekStartString } from './WeekSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
+import { CelulaPhotoGallery } from './CelulaPhotoGallery';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -265,157 +267,200 @@ export function NetworkLeaderDashboard() {
             ))}
           </div>
 
-          {/* Coordenações Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Network className="h-5 w-5" />
-                Dados por Coordenação
-              </CardTitle>
-              <CardDescription>
-                {Object.keys(reportsByCoordenacao).length} coordenação(ões) com relatórios nesta semana
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {reportsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : Object.keys(reportsByCoordenacao).length > 0 ? (
-                <div className="space-y-4">
-                  {Object.entries(reportsByCoordenacao).map(([coordId, coord]) => {
-                    const total = coord.totals.members_present + coord.totals.leaders_in_training + 
-                      coord.totals.discipleships + coord.totals.visitors + coord.totals.children;
-                    const isExpanded = expandedCoords.has(coordId);
-                    
-                    return (
-                      <Collapsible key={coordId} open={isExpanded} onOpenChange={() => toggleCoord(coordId)}>
-                        <Card>
-                          <CollapsibleTrigger asChild>
-                            <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <CardTitle className="text-base">{coord.name}</CardTitle>
-                                  <CardDescription>
-                                    {coord.reports.length} célula(s) • Total: {total}
-                                  </CardDescription>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                  <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
-                                    <span>Membros: {coord.totals.members_present}</span>
-                                    <span>•</span>
-                                    <span>Visitantes: {coord.totals.visitors}</span>
-                                  </div>
-                                  {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                                </div>
-                              </div>
-                            </CardHeader>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <CardContent className="pt-0">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Célula</TableHead>
-                                    <TableHead className="text-center">Membros</TableHead>
-                                    <TableHead className="text-center">Líderes</TableHead>
-                                    <TableHead className="text-center">Disc.</TableHead>
-                                    <TableHead className="text-center">Vis.</TableHead>
-                                    <TableHead className="text-center">Crianças</TableHead>
-                                    <TableHead className="text-center">Ações</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {coord.reports.map(report => (
-                                    <TableRow key={report.id}>
-                                      <TableCell className="font-medium">{report.celula?.name}</TableCell>
-                                      <TableCell className="text-center">{report.members_present}</TableCell>
-                                      <TableCell className="text-center">{report.leaders_in_training}</TableCell>
-                                      <TableCell className="text-center">{report.discipleships}</TableCell>
-                                      <TableCell className="text-center">{report.visitors}</TableCell>
-                                      <TableCell className="text-center">{report.children}</TableCell>
-                                      <TableCell className="text-center">
-                                        <Button 
-                                          variant="ghost" 
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            setSelectedCelula({ 
-                                              id: report.celula_id, 
-                                              name: report.celula?.name || '' 
-                                            });
-                                          }}
-                                        >
-                                          <Eye className="h-4 w-4" />
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </CardContent>
-                          </CollapsibleContent>
-                        </Card>
-                      </Collapsible>
-                    );
-                  })}
-
-                  {/* Grand Total Card */}
-                  <Card className="bg-muted/50">
-                    <CardContent className="py-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-bold">TOTAL GERAL</p>
-                          <p className="text-sm text-muted-foreground">
-                            {currentWeekReports.length} célula(s) com relatório
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm">
-                          <div className="text-center">
-                            <p className="font-bold">{grandTotals.members_present}</p>
-                            <p className="text-muted-foreground">Membros</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold">{grandTotals.leaders_in_training}</p>
-                            <p className="text-muted-foreground">Líderes</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold">{grandTotals.discipleships}</p>
-                            <p className="text-muted-foreground">Disc.</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold">{grandTotals.visitors}</p>
-                            <p className="text-muted-foreground">Vis.</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold">{grandTotals.children}</p>
-                            <p className="text-muted-foreground">Crianças</p>
-                          </div>
-                          <Badge variant="default" className="text-lg">
-                            {grandTotals.members_present + grandTotals.leaders_in_training + 
-                              grandTotals.discipleships + grandTotals.visitors + grandTotals.children}
-                          </Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhum relatório enviado nesta semana
-                </div>
+          <Tabs defaultValue="coordenacoes" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="coordenacoes" className="flex items-center gap-2">
+                <Network className="h-4 w-4" />
+                Coordenações
+              </TabsTrigger>
+              <TabsTrigger value="fotos" className="flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                Galeria de Fotos
+              </TabsTrigger>
+              {supervisoes && supervisoes.length > 0 && (
+                <TabsTrigger value="supervisoes" className="flex items-center gap-2">
+                  <ClipboardCheck className="h-4 w-4" />
+                  Supervisões
+                </TabsTrigger>
               )}
-            </CardContent>
-          </Card>
+            </TabsList>
 
-          {/* Supervisões */}
-          {supervisoes && supervisoes.length > 0 && (
-            <SupervisoesList 
-              supervisoes={supervisoes} 
-              title="Supervisões da Rede"
-              showCoordenacao
-            />
-          )}
+            <TabsContent value="coordenacoes">
+              {/* Coordenações Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Network className="h-5 w-5" />
+                    Dados por Coordenação
+                  </CardTitle>
+                  <CardDescription>
+                    {Object.keys(reportsByCoordenacao).length} coordenação(ões) com relatórios nesta semana
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {reportsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : Object.keys(reportsByCoordenacao).length > 0 ? (
+                    <div className="space-y-4">
+                      {Object.entries(reportsByCoordenacao).map(([coordId, coord]) => {
+                        const total = coord.totals.members_present + coord.totals.leaders_in_training + 
+                          coord.totals.discipleships + coord.totals.visitors + coord.totals.children;
+                        const isExpanded = expandedCoords.has(coordId);
+                        
+                        return (
+                          <Collapsible key={coordId} open={isExpanded} onOpenChange={() => toggleCoord(coordId)}>
+                            <Card>
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <CardTitle className="text-base">{coord.name}</CardTitle>
+                                      <CardDescription>
+                                        {coord.reports.length} célula(s) • Total: {total}
+                                      </CardDescription>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+                                        <span>Membros: {coord.totals.members_present}</span>
+                                        <span>•</span>
+                                        <span>Visitantes: {coord.totals.visitors}</span>
+                                      </div>
+                                      {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <CardContent className="pt-0">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Célula</TableHead>
+                                        <TableHead className="text-center">Membros</TableHead>
+                                        <TableHead className="text-center">Líderes</TableHead>
+                                        <TableHead className="text-center">Disc.</TableHead>
+                                        <TableHead className="text-center">Vis.</TableHead>
+                                        <TableHead className="text-center">Crianças</TableHead>
+                                        <TableHead className="text-center">Ações</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {coord.reports.map(report => (
+                                        <TableRow key={report.id}>
+                                          <TableCell className="font-medium">{report.celula?.name}</TableCell>
+                                          <TableCell className="text-center">{report.members_present}</TableCell>
+                                          <TableCell className="text-center">{report.leaders_in_training}</TableCell>
+                                          <TableCell className="text-center">{report.discipleships}</TableCell>
+                                          <TableCell className="text-center">{report.visitors}</TableCell>
+                                          <TableCell className="text-center">{report.children}</TableCell>
+                                          <TableCell className="text-center">
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm"
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedCelula({ 
+                                                  id: report.celula_id, 
+                                                  name: report.celula?.name || '' 
+                                                });
+                                              }}
+                                            >
+                                              <Eye className="h-4 w-4" />
+                                            </Button>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Card>
+                          </Collapsible>
+                        );
+                      })}
+
+                      {/* Grand Total Card */}
+                      <Card className="bg-muted/50">
+                        <CardContent className="py-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-bold">TOTAL GERAL</p>
+                              <p className="text-sm text-muted-foreground">
+                                {currentWeekReports.length} célula(s) com relatório
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm">
+                              <div className="text-center">
+                                <p className="font-bold">{grandTotals.members_present}</p>
+                                <p className="text-muted-foreground">Membros</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="font-bold">{grandTotals.leaders_in_training}</p>
+                                <p className="text-muted-foreground">Líderes</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="font-bold">{grandTotals.discipleships}</p>
+                                <p className="text-muted-foreground">Disc.</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="font-bold">{grandTotals.visitors}</p>
+                                <p className="text-muted-foreground">Vis.</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="font-bold">{grandTotals.children}</p>
+                                <p className="text-muted-foreground">Crianças</p>
+                              </div>
+                              <Badge variant="default" className="text-lg">
+                                {grandTotals.members_present + grandTotals.leaders_in_training + 
+                                  grandTotals.discipleships + grandTotals.visitors + grandTotals.children}
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhum relatório enviado nesta semana
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="fotos">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Image className="h-5 w-5" />
+                    Galeria de Fotos das Células
+                  </CardTitle>
+                  <CardDescription>
+                    Fotos enviadas pelos líderes de célula da rede
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CelulaPhotoGallery 
+                    reports={redeData?.reports || []} 
+                    isLoading={reportsLoading}
+                    showCelulaFilter={true}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {supervisoes && supervisoes.length > 0 && (
+              <TabsContent value="supervisoes">
+                <SupervisoesList 
+                  supervisoes={supervisoes} 
+                  title="Supervisões da Rede"
+                  showCoordenacao
+                />
+              </TabsContent>
+            )}
+          </Tabs>
         </>
       )}
 

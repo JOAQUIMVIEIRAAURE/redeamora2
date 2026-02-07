@@ -13,6 +13,7 @@ import { WeekSelector, getWeekStartString } from './WeekSelector';
 import { MembersList } from './cellleader/MembersList';
 import { CasaisManager } from './cellleader/CasaisManager';
 import { BirthdayAlert } from './BirthdayAlert';
+import { CelulaPhotoUpload } from './cellleader/CelulaPhotoUpload';
 
 export function CellLeaderDashboard() {
   const { toast } = useToast();
@@ -33,6 +34,7 @@ export function CellLeaderDashboard() {
     visitors: 0,
     children: 0,
     notes: '',
+    photo_url: null as string | null,
   });
 
   // Update form when celula or week changes
@@ -47,6 +49,7 @@ export function CellLeaderDashboard() {
           visitors: report.visitors,
           children: report.children,
           notes: report.notes || '',
+          photo_url: report.photo_url || null,
         });
       } else {
         setFormData({
@@ -56,6 +59,7 @@ export function CellLeaderDashboard() {
           visitors: 0,
           children: 0,
           notes: '',
+          photo_url: null,
         });
       }
     }
@@ -198,15 +202,23 @@ export function CellLeaderDashboard() {
 
               <Card className="mt-4">
                 <CardHeader>
-                  <CardTitle className="text-sm font-medium">Observações</CardTitle>
+                  <CardTitle className="text-sm font-medium">Observações e Foto</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Textarea
                     placeholder="Adicione observações sobre a reunião..."
                     value={formData.notes}
                     onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                    rows={4}
+                    rows={3}
                   />
+                  
+                  <CelulaPhotoUpload
+                    photoUrl={formData.photo_url}
+                    onPhotoChange={(url) => setFormData(prev => ({ ...prev, photo_url: url }))}
+                    celulaId={selectedCelula}
+                    weekStart={weekStart}
+                  />
+                  
                   <Button type="submit" className="w-full" disabled={createReport.isPending}>
                     {createReport.isPending ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />

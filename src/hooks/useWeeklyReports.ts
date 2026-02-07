@@ -11,6 +11,7 @@ export interface WeeklyReport {
   visitors: number;
   children: number;
   notes: string | null;
+  photo_url: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -39,6 +40,7 @@ export interface WeeklyReportInput {
   visitors: number;
   children: number;
   notes?: string;
+  photo_url?: string | null;
 }
 
 // Get current week's Monday

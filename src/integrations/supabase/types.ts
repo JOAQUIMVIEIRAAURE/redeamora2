@@ -646,6 +646,7 @@ export type Database = {
           leaders_in_training: number
           members_present: number
           notes: string | null
+          photo_url: string | null
           updated_at: string
           visitors: number
           week_start: string
@@ -660,6 +661,7 @@ export type Database = {
           leaders_in_training?: number
           members_present?: number
           notes?: string | null
+          photo_url?: string | null
           updated_at?: string
           visitors?: number
           week_start: string
@@ -674,6 +676,7 @@ export type Database = {
           leaders_in_training?: number
           members_present?: number
           notes?: string | null
+          photo_url?: string | null
           updated_at?: string
           visitors?: number
           week_start?: string
