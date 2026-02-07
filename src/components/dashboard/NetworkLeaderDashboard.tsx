@@ -6,11 +6,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, FileSpreadsheet, ChevronDown, ChevronUp, Eye, ClipboardCheck, Image, Sparkles } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, FileSpreadsheet, ChevronDown, ChevronUp, Eye, ClipboardCheck, Image, Sparkles, History } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useCelulas } from '@/hooks/useCelulas';
-import { useWeeklyReportsByRede, WeeklyReport } from '@/hooks/useWeeklyReports';
+import { useWeeklyReportsByRede, WeeklyReport, useUpdateWeeklyReport, useDeleteWeeklyReport } from '@/hooks/useWeeklyReports';
 import { useSupervisoesByRede } from '@/hooks/useSupervisoes';
 import { useToast } from '@/hooks/use-toast';
 import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
@@ -19,6 +19,7 @@ import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { CelulaPhotoGallery } from './CelulaPhotoGallery';
 import { AIInsightsPanel } from './AIInsightsPanel';
+import { ReportsHistoryTable } from '@/components/reports/ReportsHistoryTable';
 import { exportToExcel } from '@/utils/exportReports';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -44,6 +45,53 @@ export function NetworkLeaderDashboard() {
   
   const { data: redeData, isLoading: reportsLoading } = useWeeklyReportsByRede(selectedRede, dateRangeFilter);
   const { data: supervisoes } = useSupervisoesByRede(selectedRede);
+  
+  const updateReport = useUpdateWeeklyReport();
+  const deleteReport = useDeleteWeeklyReport();
+
+  const handleEditReport = (data: {
+    id: string;
+    members_present: number;
+    leaders_in_training: number;
+    discipleships: number;
+    visitors: number;
+    children: number;
+    notes: string | null;
+  }) => {
+    updateReport.mutate(data, {
+      onSuccess: () => {
+        toast({
+          title: 'Sucesso!',
+          description: 'Relatório atualizado com sucesso',
+        });
+      },
+      onError: () => {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível atualizar o relatório',
+          variant: 'destructive',
+        });
+      },
+    });
+  };
+
+  const handleDeleteReport = (id: string) => {
+    deleteReport.mutate(id, {
+      onSuccess: () => {
+        toast({
+          title: 'Sucesso!',
+          description: 'Relatório excluído com sucesso',
+        });
+      },
+      onError: () => {
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível excluir o relatório',
+          variant: 'destructive',
+        });
+      },
+    });
+  };
 
   const toggleCoord = (coordId: string) => {
     setExpandedCoords(prev => {
@@ -238,6 +286,10 @@ export function NetworkLeaderDashboard() {
                 <Network className="h-4 w-4" />
                 Coordenações
               </TabsTrigger>
+              <TabsTrigger value="historico" className="flex items-center gap-2">
+                <History className="h-4 w-4" />
+                Histórico
+              </TabsTrigger>
               <TabsTrigger value="insights" className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 Insights IA
@@ -402,6 +454,35 @@ export function NetworkLeaderDashboard() {
                     <div className="text-center py-8 text-muted-foreground">
                       Nenhum relatório enviado nesta semana
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="historico">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <History className="h-5 w-5" />
+                    Histórico de Relatórios
+                  </CardTitle>
+                  <CardDescription>
+                    Gerencie os relatórios - edite ou exclua conforme necessário
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {reportsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : (
+                    <ReportsHistoryTable
+                      reports={currentReports}
+                      onEdit={handleEditReport}
+                      onDelete={handleDeleteReport}
+                      isUpdating={updateReport.isPending}
+                      isDeleting={deleteReport.isPending}
+                    />
                   )}
                 </CardContent>
               </Card>

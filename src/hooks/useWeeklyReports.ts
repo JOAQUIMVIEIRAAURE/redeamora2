@@ -253,7 +253,7 @@ export function useUpdateWeeklyReport() {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async ({ id, ...input }: WeeklyReportInput & { id: string }) => {
+    mutationFn: async ({ id, ...input }: Partial<WeeklyReportInput> & { id: string }) => {
       const { data, error } = await supabase
         .from('weekly_reports')
         .update(input)
@@ -266,6 +266,28 @@ export function useUpdateWeeklyReport() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['weekly-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-reports-coordenacao'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-reports-rede'] });
+    },
+  });
+}
+
+export function useDeleteWeeklyReport() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('weekly_reports')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['weekly-reports'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-reports-coordenacao'] });
+      queryClient.invalidateQueries({ queryKey: ['weekly-reports-rede'] });
     },
   });
 }
