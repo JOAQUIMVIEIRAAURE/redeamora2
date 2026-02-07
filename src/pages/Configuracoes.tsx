@@ -11,6 +11,7 @@ const roleLabels: Record<string, { label: string; variant: 'default' | 'secondar
   admin: { label: 'Administrador', variant: 'default' },
   rede_leader: { label: 'Líder de Rede', variant: 'secondary' },
   coordenador: { label: 'Coordenador', variant: 'secondary' },
+  supervisor: { label: 'Supervisor', variant: 'secondary' },
   celula_leader: { label: 'Líder de Célula', variant: 'outline' },
 };
 
