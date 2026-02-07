@@ -3,22 +3,18 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateCelula, useUpdateCelula, Celula } from '@/hooks/useCelulas';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
-import { useProfiles } from '@/hooks/useProfiles';
-import { supabase } from '@/integrations/supabase/client';
-import { Cake, Church } from 'lucide-react';
+import { LeadershipCoupleSelect } from '@/components/leadership/LeadershipCoupleSelect';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   coordenacao_id: z.string().min(1, 'Coordenação é obrigatória'),
-  leader_id: z.string().optional(),
-  leader_birth_date: z.string().optional(),
-  leader_joined_church_at: z.string().optional(),
+  leadership_couple_id: z.string().optional().nullable(),
   address: z.string().optional(),
   meeting_day: z.string().optional(),
   meeting_time: z.string().optional(),
@@ -44,7 +40,6 @@ const DAYS_OF_WEEK = [
 
 export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialogProps) {
   const { data: coordenacoes } = useCoordenacoes();
-  const { data: profiles } = useProfiles();
   const createCelula = useCreateCelula();
   const updateCelula = useUpdateCelula();
   
@@ -53,66 +48,23 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
     defaultValues: {
       name: celula?.name || '',
       coordenacao_id: celula?.coordenacao_id || '',
-      leader_id: celula?.leader_id || '',
-      leader_birth_date: '',
-      leader_joined_church_at: '',
+      leadership_couple_id: celula?.leadership_couple_id || null,
       address: celula?.address || '',
       meeting_day: celula?.meeting_day || '',
       meeting_time: celula?.meeting_time || '',
     },
   });
   
-  const selectedLeaderId = form.watch('leader_id');
-  
-  // Load leader's data when leader is selected
-  useEffect(() => {
-    async function loadLeaderData() {
-      if (selectedLeaderId) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('birth_date, joined_church_at')
-          .eq('id', selectedLeaderId)
-          .single();
-        
-        if (data) {
-          form.setValue('leader_birth_date', data.birth_date || '');
-          form.setValue('leader_joined_church_at', data.joined_church_at || '');
-        } else {
-          form.setValue('leader_birth_date', '');
-          form.setValue('leader_joined_church_at', '');
-        }
-      } else {
-        form.setValue('leader_birth_date', '');
-        form.setValue('leader_joined_church_at', '');
-      }
-    }
-    loadLeaderData();
-  }, [selectedLeaderId, form]);
-  
   async function onSubmit(data: FormData) {
     try {
       const payload = {
         name: data.name,
         coordenacao_id: data.coordenacao_id,
-        leader_id: data.leader_id || null,
+        leadership_couple_id: data.leadership_couple_id || null,
         address: data.address || null,
         meeting_day: data.meeting_day || null,
         meeting_time: data.meeting_time || null,
       };
-      
-      // Update leader's data if provided
-      if (data.leader_id) {
-        const updateData: Record<string, string | null> = {};
-        if (data.leader_birth_date) updateData.birth_date = data.leader_birth_date;
-        if (data.leader_joined_church_at) updateData.joined_church_at = data.leader_joined_church_at;
-        
-        if (Object.keys(updateData).length > 0) {
-          await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('id', data.leader_id);
-        }
-      }
       
       if (celula) {
         await updateCelula.mutateAsync({ id: celula.id, ...payload });
@@ -176,69 +128,19 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
             
             <FormField
               control={form.control}
-              name="leader_id"
+              name="leadership_couple_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Líder (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um líder" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {profiles?.map((profile) => (
-                        <SelectItem key={profile.id} value={profile.id}>
-                          {profile.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <LeadershipCoupleSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="Líderes da Célula (Casal)"
+                    placeholder="Selecione o casal líder"
+                  />
                   <FormMessage />
                 </FormItem>
               )}
             />
-            
-            {selectedLeaderId && (
-              <div className="space-y-4 p-4 bg-muted/50 rounded-lg border">
-                <p className="text-sm font-medium text-muted-foreground">Dados do Líder</p>
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="leader_birth_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1 text-xs">
-                          <Cake className="h-3 w-3" />
-                          Nascimento
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="leader_joined_church_at"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-1 text-xs">
-                          <Church className="h-3 w-3" />
-                          Entrada na Igreja
-                        </FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-            )}
             
             <FormField
               control={form.control}

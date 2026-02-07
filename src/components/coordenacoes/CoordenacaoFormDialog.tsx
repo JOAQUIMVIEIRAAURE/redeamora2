@@ -8,12 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateCoordenacao, useUpdateCoordenacao, Coordenacao } from '@/hooks/useCoordenacoes';
 import { useRedes } from '@/hooks/useRedes';
-import { useProfiles } from '@/hooks/useProfiles';
+import { LeadershipCoupleSelect } from '@/components/leadership/LeadershipCoupleSelect';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   rede_id: z.string().min(1, 'Rede é obrigatória'),
-  leader_id: z.string().optional(),
+  leadership_couple_id: z.string().optional().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -26,7 +26,6 @@ interface CoordenacaoFormDialogProps {
 
 export function CoordenacaoFormDialog({ open, onOpenChange, coordenacao }: CoordenacaoFormDialogProps) {
   const { data: redes } = useRedes();
-  const { data: profiles } = useProfiles();
   const createCoordenacao = useCreateCoordenacao();
   const updateCoordenacao = useUpdateCoordenacao();
   
@@ -35,7 +34,7 @@ export function CoordenacaoFormDialog({ open, onOpenChange, coordenacao }: Coord
     defaultValues: {
       name: coordenacao?.name || '',
       rede_id: coordenacao?.rede_id || '',
-      leader_id: coordenacao?.leader_id || '',
+      leadership_couple_id: coordenacao?.leadership_couple_id || null,
     },
   });
   
@@ -44,7 +43,7 @@ export function CoordenacaoFormDialog({ open, onOpenChange, coordenacao }: Coord
       const payload = {
         name: data.name,
         rede_id: data.rede_id,
-        leader_id: data.leader_id || null,
+        leadership_couple_id: data.leadership_couple_id || null,
       };
       
       if (coordenacao) {
@@ -109,24 +108,15 @@ export function CoordenacaoFormDialog({ open, onOpenChange, coordenacao }: Coord
             
             <FormField
               control={form.control}
-              name="leader_id"
+              name="leadership_couple_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Coordenador (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um coordenador" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {profiles?.map((profile) => (
-                        <SelectItem key={profile.id} value={profile.id}>
-                          {profile.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <LeadershipCoupleSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="Coordenadores (Casal)"
+                    placeholder="Selecione o casal coordenador"
+                  />
                   <FormMessage />
                 </FormItem>
               )}

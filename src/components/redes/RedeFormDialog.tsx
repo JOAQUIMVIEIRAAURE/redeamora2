@@ -5,13 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateRede, useUpdateRede, Rede } from '@/hooks/useRedes';
-import { useProfiles } from '@/hooks/useProfiles';
+import { LeadershipCoupleSelect } from '@/components/leadership/LeadershipCoupleSelect';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
-  leader_id: z.string().optional(),
+  leadership_couple_id: z.string().optional().nullable(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -23,7 +22,6 @@ interface RedeFormDialogProps {
 }
 
 export function RedeFormDialog({ open, onOpenChange, rede }: RedeFormDialogProps) {
-  const { data: profiles } = useProfiles();
   const createRede = useCreateRede();
   const updateRede = useUpdateRede();
   
@@ -31,7 +29,7 @@ export function RedeFormDialog({ open, onOpenChange, rede }: RedeFormDialogProps
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: rede?.name || '',
-      leader_id: rede?.leader_id || '',
+      leadership_couple_id: rede?.leadership_couple_id || null,
     },
   });
   
@@ -39,7 +37,7 @@ export function RedeFormDialog({ open, onOpenChange, rede }: RedeFormDialogProps
     try {
       const payload = {
         name: data.name,
-        leader_id: data.leader_id || null,
+        leadership_couple_id: data.leadership_couple_id || null,
       };
       
       if (rede) {
@@ -79,24 +77,15 @@ export function RedeFormDialog({ open, onOpenChange, rede }: RedeFormDialogProps
             
             <FormField
               control={form.control}
-              name="leader_id"
+              name="leadership_couple_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Líder (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || ''}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um líder" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {profiles?.map((profile) => (
-                        <SelectItem key={profile.id} value={profile.id}>
-                          {profile.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <LeadershipCoupleSelect
+                    value={field.value}
+                    onChange={field.onChange}
+                    label="Líderes da Rede (Casal)"
+                    placeholder="Selecione o casal líder"
+                  />
                   <FormMessage />
                 </FormItem>
               )}
