@@ -97,6 +97,7 @@ export function CelulaPhotoGallery({ reports, isLoading, showCelulaFilter = true
                     <img
                       src={report.photo_url!}
                       alt={`Célula ${report.celula?.name}`}
+                      crossOrigin="anonymous"
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3">
@@ -129,6 +130,7 @@ export function CelulaPhotoGallery({ reports, isLoading, showCelulaFilter = true
               <img
                 src={selectedPhoto.photo_url!}
                 alt={`Célula ${selectedPhoto.celula?.name}`}
+                crossOrigin="anonymous"
                 className="w-full rounded-lg"
               />
               
