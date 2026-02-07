@@ -6,8 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download, ChevronDown, ChevronUp, Eye, ClipboardCheck, Image } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, FileSpreadsheet, ChevronDown, ChevronUp, Eye, ClipboardCheck, Image } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
+import { useCoordenacoes } from '@/hooks/useCoordenacoes';
+import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReportsByRede, WeeklyReport } from '@/hooks/useWeeklyReports';
 import { useSupervisoesByRede } from '@/hooks/useSupervisoes';
 import { useToast } from '@/hooks/use-toast';
@@ -16,12 +18,15 @@ import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { CelulaPhotoGallery } from './CelulaPhotoGallery';
+import { exportToExcel } from '@/utils/exportReports';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function NetworkLeaderDashboard() {
   const { toast } = useToast();
   const { data: redes, isLoading: redesLoading } = useRedes();
+  const { data: coordenacoes } = useCoordenacoes();
+  const { data: celulas } = useCelulas();
   
   const [selectedRede, setSelectedRede] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRangeValue>({
@@ -119,8 +124,8 @@ export function NetworkLeaderDashboard() {
     return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
   };
 
-  const exportToCSV = () => {
-    if (!currentReports.length) {
+  const handleExportExcel = () => {
+    if (!currentReports.length || !celulas || !coordenacoes) {
       toast({
         title: 'Aviso',
         description: 'Nenhum dado para exportar',
@@ -129,73 +134,20 @@ export function NetworkLeaderDashboard() {
       return;
     }
 
-    const headers = ['Coordenação', 'Célula', 'Data', 'Membros Presentes', 'Líderes em Treinamento', 'Discipulados', 'Visitantes', 'Crianças', 'Total'];
-    
-    const rows = currentReports.map(report => {
-      const total = report.members_present + report.leaders_in_training + 
-        report.discipleships + report.visitors + report.children;
-      const reportDate = report.meeting_date || report.week_start;
-      return [
-        report.celula?.coordenacao?.name || '',
-        report.celula?.name || '',
-        format(new Date(reportDate), "dd/MM/yyyy", { locale: ptBR }),
-        report.members_present,
-        report.leaders_in_training,
-        report.discipleships,
-        report.visitors,
-        report.children,
-        total
-      ];
+    // Filter coordenacoes for this rede only
+    const redeCoord = coordenacoes.filter(c => c.rede_id === selectedRede);
+    const redeCelulas = celulas.filter(c => redeCoord.some(coord => coord.id === c.coordenacao_id));
+
+    exportToExcel({
+      reports: currentReports,
+      celulas: redeCelulas,
+      coordenacoes: redeCoord,
+      periodLabel: formatDateRangeDisplay(),
     });
-
-    // Add totals row per coordenacao
-    Object.entries(reportsByCoordenacao).forEach(([_, coord]) => {
-      const total = coord.totals.members_present + coord.totals.leaders_in_training + 
-        coord.totals.discipleships + coord.totals.visitors + coord.totals.children;
-      rows.push([
-        `TOTAL ${coord.name}`,
-        '',
-        '',
-        coord.totals.members_present,
-        coord.totals.leaders_in_training,
-        coord.totals.discipleships,
-        coord.totals.visitors,
-        coord.totals.children,
-        total
-      ]);
-    });
-
-    // Add grand total
-    const grandTotal = grandTotals.members_present + grandTotals.leaders_in_training + 
-      grandTotals.discipleships + grandTotals.visitors + grandTotals.children;
-    rows.push([
-      'TOTAL GERAL',
-      '',
-      '',
-      grandTotals.members_present,
-      grandTotals.leaders_in_training,
-      grandTotals.discipleships,
-      grandTotals.visitors,
-      grandTotals.children,
-      grandTotal
-    ]);
-
-    const csvContent = [
-      `Relatório da Rede - Período ${formatDateRangeDisplay()}`,
-      '',
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_rede_${dateRangeFilter.from}_${dateRangeFilter.to}.csv`;
-    link.click();
     
     toast({
       title: 'Sucesso!',
-      description: 'Arquivo CSV exportado com sucesso',
+      description: 'Arquivo Excel exportado com sucesso',
     });
   };
 
@@ -228,9 +180,9 @@ export function NetworkLeaderDashboard() {
         <div className="flex flex-wrap items-center gap-2">
           <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
           {selectedRede && currentReports.length > 0 && (
-            <Button onClick={exportToCSV} variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar CSV
+            <Button onClick={handleExportExcel} variant="outline">
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
             </Button>
           )}
         </div>

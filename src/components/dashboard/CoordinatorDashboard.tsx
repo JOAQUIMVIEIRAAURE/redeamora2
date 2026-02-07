@@ -5,20 +5,25 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye, ClipboardCheck, Image } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye, ClipboardCheck, Image, FileSpreadsheet } from 'lucide-react';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
+import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReportsByCoordenacao } from '@/hooks/useWeeklyReports';
 import { useSupervisoesByCoordenacao } from '@/hooks/useSupervisoes';
+import { useToast } from '@/hooks/use-toast';
 import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { CelulaPhotoGallery } from './CelulaPhotoGallery';
+import { exportToExcel } from '@/utils/exportReports';
 import { subDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function CoordinatorDashboard() {
+  const { toast } = useToast();
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
+  const { data: celulas } = useCelulas();
   
   const [selectedCoordenacao, setSelectedCoordenacao] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRangeValue>({
@@ -34,6 +39,37 @@ export function CoordinatorDashboard() {
   
   const { data: reports, isLoading: reportsLoading } = useWeeklyReportsByCoordenacao(selectedCoordenacao, dateRangeFilter);
   const { data: supervisoes, isLoading: supervisoesLoading } = useSupervisoesByCoordenacao(selectedCoordenacao);
+
+  const formatDateRangeDisplay = () => {
+    return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
+  };
+
+  const handleExportExcel = () => {
+    if (!reports?.length || !celulas || !coordenacoes) {
+      toast({
+        title: 'Aviso',
+        description: 'Nenhum dado para exportar',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Filter data for this coordenacao only
+    const coord = coordenacoes.filter(c => c.id === selectedCoordenacao);
+    const coordCelulas = celulas.filter(c => c.coordenacao_id === selectedCoordenacao);
+
+    exportToExcel({
+      reports: reports,
+      celulas: coordCelulas,
+      coordenacoes: coord,
+      periodLabel: formatDateRangeDisplay(),
+    });
+    
+    toast({
+      title: 'Sucesso!',
+      description: 'Arquivo Excel exportado com sucesso',
+    });
+  };
 
   // Show all coordenacoes in controlled environment
   const userCoordenacoes = coordenacoes || [];
@@ -85,10 +121,18 @@ export function CoordinatorDashboard() {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Dashboard do Coordenador</h2>
           <p className="text-sm text-muted-foreground">
-            Período: {format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - {format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}
+            Período: {formatDateRangeDisplay()}
           </p>
         </div>
-        <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
+        <div className="flex flex-wrap items-center gap-2">
+          <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
+          {selectedCoordenacao && currentReports.length > 0 && (
+            <Button onClick={handleExportExcel} variant="outline">
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
+            </Button>
+          )}
+        </div>
       </div>
 
       <Card>

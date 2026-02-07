@@ -3,13 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, Download, LayoutGrid, Home } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, FileSpreadsheet, LayoutGrid, Home } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReports, WeeklyReport, DateRangeFilter } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
 import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
+import { exportToExcel } from '@/utils/exportReports';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -105,8 +106,8 @@ export function AdminDashboard() {
     return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
   };
 
-  const exportToCSV = () => {
-    if (!currentReports.length) {
+  const handleExportExcel = () => {
+    if (!currentReports.length || !celulas || !coordenacoes) {
       toast({
         title: 'Aviso',
         description: 'Nenhum dado para exportar',
@@ -115,58 +116,16 @@ export function AdminDashboard() {
       return;
     }
 
-    const headers = ['Rede', 'Coordenação', 'Célula', 'Data', 'Membros Presentes', 'Líderes em Treinamento', 'Discipulados', 'Visitantes', 'Crianças', 'Total'];
-    
-    const rows = currentReports.map(report => {
-      const total = report.members_present + report.leaders_in_training + 
-        report.discipleships + report.visitors + report.children;
-      const reportDate = report.meeting_date || report.week_start;
-      return [
-        report.celula?.coordenacao?.rede?.name || '',
-        report.celula?.coordenacao?.name || '',
-        report.celula?.name || '',
-        format(new Date(reportDate), "dd/MM/yyyy", { locale: ptBR }),
-        report.members_present,
-        report.leaders_in_training,
-        report.discipleships,
-        report.visitors,
-        report.children,
-        total
-      ];
+    exportToExcel({
+      reports: currentReports,
+      celulas,
+      coordenacoes,
+      periodLabel: formatDateRangeDisplay(),
     });
-
-    // Add grand total
-    const grandTotal = grandTotals.members_present + grandTotals.leaders_in_training + 
-      grandTotals.discipleships + grandTotals.visitors + grandTotals.children;
-    rows.push([
-      'TOTAL GERAL',
-      '',
-      '',
-      '',
-      grandTotals.members_present,
-      grandTotals.leaders_in_training,
-      grandTotals.discipleships,
-      grandTotals.visitors,
-      grandTotals.children,
-      grandTotal
-    ]);
-
-    const csvContent = [
-      `Relatório Geral - Período ${formatDateRangeDisplay()}`,
-      '',
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `relatorio_geral_${dateRangeFilter.from}_${dateRangeFilter.to}.csv`;
-    link.click();
     
     toast({
       title: 'Sucesso!',
-      description: 'Arquivo CSV exportado com sucesso',
+      description: 'Arquivo Excel exportado com sucesso',
     });
   };
 
@@ -202,9 +161,9 @@ export function AdminDashboard() {
         <div className="flex flex-wrap items-center gap-2">
           <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
           {currentReports.length > 0 && (
-            <Button onClick={exportToCSV} variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Exportar para CSV
+            <Button onClick={handleExportExcel} variant="outline">
+              <FileSpreadsheet className="h-4 w-4 mr-2" />
+              Exportar Excel
             </Button>
           )}
         </div>
