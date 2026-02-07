@@ -380,13 +380,31 @@ export function UserRolesManager() {
         <TabsContent value="supervisores">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardCheck className="h-5 w-5" />
-                Gestão de Supervisores
-              </CardTitle>
-              <CardDescription>
-                Vincule perfis como supervisores de coordenações específicas
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardCheck className="h-5 w-5" />
+                    Gestão de Supervisores
+                  </CardTitle>
+                  <CardDescription>
+                    Vincule perfis como supervisores de coordenações específicas
+                  </CardDescription>
+                </div>
+                <div className="flex items-center gap-2">
+                  {hasUnsavedChanges && (
+                    <>
+                      <Button variant="outline" onClick={cancelChanges}>
+                        Cancelar
+                      </Button>
+                      <Button onClick={saveRoleChanges} disabled={isSaving}>
+                        {isSaving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        <Save className="h-4 w-4 mr-2" />
+                        Salvar Alterações
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Add Supervisor Form */}
