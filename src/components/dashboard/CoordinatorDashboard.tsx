@@ -4,7 +4,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye, ClipboardCheck } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, LayoutGrid, Eye, ClipboardCheck, Image } from 'lucide-react';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useWeeklyReportsByCoordenacao } from '@/hooks/useWeeklyReports';
 import { useSupervisoesByCoordenacao } from '@/hooks/useSupervisoes';
@@ -12,6 +13,7 @@ import { WeekSelector, getWeekStartString } from './WeekSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
+import { CelulaPhotoGallery } from './CelulaPhotoGallery';
 
 export function CoordinatorDashboard() {
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
@@ -119,83 +121,126 @@ export function CoordinatorDashboard() {
             ))}
           </div>
 
-          {/* Cells Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <LayoutGrid className="h-5 w-5" />
-                Relatórios por Célula
-              </CardTitle>
-              <CardDescription>
-                {currentWeekReports.length} célula(s) enviaram relatório nesta semana
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {reportsLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : currentWeekReports.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Célula</TableHead>
-                      <TableHead className="text-center">Membros</TableHead>
-                      <TableHead className="text-center">Líderes Trein.</TableHead>
-                      <TableHead className="text-center">Discipulados</TableHead>
-                      <TableHead className="text-center">Visitantes</TableHead>
-                      <TableHead className="text-center">Crianças</TableHead>
-                      <TableHead className="text-center">Total</TableHead>
-                      <TableHead className="text-center">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {currentWeekReports.map(report => {
-                      const total = report.members_present + report.leaders_in_training + 
-                        report.discipleships + report.visitors + report.children;
-                      return (
-                        <TableRow key={report.id}>
-                          <TableCell className="font-medium">{report.celula?.name}</TableCell>
-                          <TableCell className="text-center">{report.members_present}</TableCell>
-                          <TableCell className="text-center">{report.leaders_in_training}</TableCell>
-                          <TableCell className="text-center">{report.discipleships}</TableCell>
-                          <TableCell className="text-center">{report.visitors}</TableCell>
-                          <TableCell className="text-center">{report.children}</TableCell>
-                          <TableCell className="text-center">
-                            <Badge variant="secondary">{total}</Badge>
-                          </TableCell>
-                          <TableCell className="text-center">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => setSelectedCelula({ 
-                                id: report.celula_id, 
-                                name: report.celula?.name || '' 
-                              })}
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhum relatório enviado nesta semana
-                </div>
+          <Tabs defaultValue="relatorios" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="relatorios" className="flex items-center gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                Relatórios
+              </TabsTrigger>
+              <TabsTrigger value="fotos" className="flex items-center gap-2">
+                <Image className="h-4 w-4" />
+                Galeria de Fotos
+              </TabsTrigger>
+              {supervisoes && supervisoes.length > 0 && (
+                <TabsTrigger value="supervisoes" className="flex items-center gap-2">
+                  <ClipboardCheck className="h-4 w-4" />
+                  Supervisões
+                </TabsTrigger>
               )}
-            </CardContent>
-          </Card>
+            </TabsList>
 
-          {/* Supervisões */}
-          {supervisoes && supervisoes.length > 0 && (
-            <SupervisoesList 
-              supervisoes={supervisoes} 
-              title="Supervisões da Coordenação"
-            />
-          )}
+            <TabsContent value="relatorios">
+              {/* Cells Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <LayoutGrid className="h-5 w-5" />
+                    Relatórios por Célula
+                  </CardTitle>
+                  <CardDescription>
+                    {currentWeekReports.length} célula(s) enviaram relatório nesta semana
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {reportsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : currentWeekReports.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Célula</TableHead>
+                          <TableHead className="text-center">Membros</TableHead>
+                          <TableHead className="text-center">Líderes Trein.</TableHead>
+                          <TableHead className="text-center">Discipulados</TableHead>
+                          <TableHead className="text-center">Visitantes</TableHead>
+                          <TableHead className="text-center">Crianças</TableHead>
+                          <TableHead className="text-center">Total</TableHead>
+                          <TableHead className="text-center">Ações</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {currentWeekReports.map(report => {
+                          const total = report.members_present + report.leaders_in_training + 
+                            report.discipleships + report.visitors + report.children;
+                          return (
+                            <TableRow key={report.id}>
+                              <TableCell className="font-medium">{report.celula?.name}</TableCell>
+                              <TableCell className="text-center">{report.members_present}</TableCell>
+                              <TableCell className="text-center">{report.leaders_in_training}</TableCell>
+                              <TableCell className="text-center">{report.discipleships}</TableCell>
+                              <TableCell className="text-center">{report.visitors}</TableCell>
+                              <TableCell className="text-center">{report.children}</TableCell>
+                              <TableCell className="text-center">
+                                <Badge variant="secondary">{total}</Badge>
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => setSelectedCelula({ 
+                                    id: report.celula_id, 
+                                    name: report.celula?.name || '' 
+                                  })}
+                                >
+                                  <Eye className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhum relatório enviado nesta semana
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="fotos">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Image className="h-5 w-5" />
+                    Galeria de Fotos das Células
+                  </CardTitle>
+                  <CardDescription>
+                    Fotos enviadas pelos líderes de célula
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <CelulaPhotoGallery 
+                    reports={reports || []} 
+                    isLoading={reportsLoading}
+                    showCelulaFilter={true}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {supervisoes && supervisoes.length > 0 && (
+              <TabsContent value="supervisoes">
+                <SupervisoesList 
+                  supervisoes={supervisoes} 
+                  title="Supervisões da Coordenação"
+                />
+              </TabsContent>
+            )}
+          </Tabs>
         </>
       )}
 
