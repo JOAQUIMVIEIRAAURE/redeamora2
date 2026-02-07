@@ -5,12 +5,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
-import { Loader2, Calendar, Users, UserCheck, Heart, UserPlus, Baby, Search, Database, TrendingUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, Calendar, Users, UserCheck, Heart, UserPlus, Baby, Search, Database, TrendingUp, Download, FileSpreadsheet } from 'lucide-react';
 import { useWeeklyReports } from '@/hooks/useWeeklyReports';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { format, parseISO, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { exportToExcel } from '@/utils/exportReports';
 
 type PeriodFilter = 'all' | 'this_month' | 'last_month' | 'last_3_months';
 
@@ -123,6 +125,30 @@ export default function Presenca() {
     { icon: UserPlus, label: 'Visitantes', value: totals.visitors, color: 'text-purple-600' },
     { icon: Baby, label: 'Crianças', value: totals.children, color: 'text-orange-600' },
   ];
+
+  const getPeriodLabel = () => {
+    switch (periodFilter) {
+      case 'this_month':
+        return format(new Date(), "MMMM 'de' yyyy", { locale: ptBR });
+      case 'last_month':
+        return format(subMonths(new Date(), 1), "MMMM 'de' yyyy", { locale: ptBR });
+      case 'last_3_months':
+        return 'Últimos 3 meses';
+      default:
+        return 'Todo o período';
+    }
+  };
+
+  const handleExport = () => {
+    if (!celulas || !coordenacoes) return;
+    
+    exportToExcel({
+      reports: filteredReports,
+      celulas,
+      coordenacoes,
+      periodLabel: getPeriodLabel(),
+    });
+  };
   
   return (
     <AppLayout title="Banco de Dados - Relatórios">
@@ -240,6 +266,14 @@ export default function Presenca() {
                 <TrendingUp className="h-5 w-5" />
                 Relatórios ({filteredReports.length})
               </CardTitle>
+              <Button 
+                onClick={handleExport}
+                disabled={filteredReports.length === 0 || isLoading}
+                className="gap-2"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                Exportar Excel
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
