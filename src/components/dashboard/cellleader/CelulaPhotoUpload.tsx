@@ -106,6 +106,7 @@ export function CelulaPhotoUpload({ photoUrl, onPhotoChange, celulaId, weekStart
           <img
             src={photoUrl}
             alt="Foto da célula"
+            crossOrigin="anonymous"
             className="w-full h-48 object-cover rounded-lg border"
           />
           <Button
