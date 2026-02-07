@@ -11,6 +11,7 @@ import { useSupervisoesByCoordenacao } from '@/hooks/useSupervisoes';
 import { WeekSelector, getWeekStartString } from './WeekSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
+import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 
 export function CoordinatorDashboard() {
   const { data: coordenacoes, isLoading: coordenacoesLoading } = useCoordenacoes();
@@ -98,6 +99,9 @@ export function CoordinatorDashboard() {
 
       {selectedCoordenacao && (
         <>
+          {/* Birthday Alert for Cell Leaders */}
+          <LeaderBirthdayAlert coordenacaoId={selectedCoordenacao} />
+
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             {statCards.map(({ icon: Icon, label, value }) => (

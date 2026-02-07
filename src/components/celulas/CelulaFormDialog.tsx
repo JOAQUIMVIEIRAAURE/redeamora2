@@ -1,20 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateCelula, useUpdateCelula, Celula } from '@/hooks/useCelulas';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useProfiles } from '@/hooks/useProfiles';
+import { supabase } from '@/integrations/supabase/client';
+import { Cake } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   coordenacao_id: z.string().min(1, 'Coordenação é obrigatória'),
   leader_id: z.string().optional(),
+  leader_birth_date: z.string().optional(),
   address: z.string().optional(),
   meeting_day: z.string().optional(),
   meeting_time: z.string().optional(),
@@ -43,6 +46,7 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
   const { data: profiles } = useProfiles();
   const createCelula = useCreateCelula();
   const updateCelula = useUpdateCelula();
+  const [selectedLeaderBirthDate, setSelectedLeaderBirthDate] = useState<string | null>(null);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -50,11 +54,39 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
       name: celula?.name || '',
       coordenacao_id: celula?.coordenacao_id || '',
       leader_id: celula?.leader_id || '',
+      leader_birth_date: '',
       address: celula?.address || '',
       meeting_day: celula?.meeting_day || '',
       meeting_time: celula?.meeting_time || '',
     },
   });
+  
+  const selectedLeaderId = form.watch('leader_id');
+  
+  // Load leader's birth date when leader is selected
+  useEffect(() => {
+    async function loadLeaderBirthDate() {
+      if (selectedLeaderId) {
+        const { data } = await supabase
+          .from('profiles')
+          .select('birth_date')
+          .eq('id', selectedLeaderId)
+          .single();
+        
+        if (data?.birth_date) {
+          setSelectedLeaderBirthDate(data.birth_date);
+          form.setValue('leader_birth_date', data.birth_date);
+        } else {
+          setSelectedLeaderBirthDate(null);
+          form.setValue('leader_birth_date', '');
+        }
+      } else {
+        setSelectedLeaderBirthDate(null);
+        form.setValue('leader_birth_date', '');
+      }
+    }
+    loadLeaderBirthDate();
+  }, [selectedLeaderId, form]);
   
   async function onSubmit(data: FormData) {
     try {
@@ -66,6 +98,14 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
         meeting_day: data.meeting_day || null,
         meeting_time: data.meeting_time || null,
       };
+      
+      // Update leader's birth date if provided
+      if (data.leader_id && data.leader_birth_date) {
+        await supabase
+          .from('profiles')
+          .update({ birth_date: data.leader_birth_date })
+          .eq('id', data.leader_id);
+      }
       
       if (celula) {
         await updateCelula.mutateAsync({ id: celula.id, ...payload });
@@ -81,7 +121,7 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{celula ? 'Editar Célula' : 'Nova Célula'}</DialogTitle>
         </DialogHeader>
@@ -151,6 +191,28 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
                 </FormItem>
               )}
             />
+            
+            {selectedLeaderId && (
+              <FormField
+                control={form.control}
+                name="leader_birth_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Cake className="h-4 w-4 text-amber-500" />
+                      Data de Nascimento do Líder
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                      Para receber alertas de aniversário
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             
             <FormField
               control={form.control}

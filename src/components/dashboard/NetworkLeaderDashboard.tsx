@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { WeekSelector, getWeekStartString } from './WeekSelector';
 import { CelulaDetailsDialog } from './CelulaDetailsDialog';
 import { SupervisoesList } from './SupervisoesList';
+import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -244,6 +245,9 @@ export function NetworkLeaderDashboard() {
 
       {selectedRede && (
         <>
+          {/* Birthday Alert for Cell Leaders */}
+          <LeaderBirthdayAlert redeId={selectedRede} />
+
           {/* Summary Cards */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             {statCards.map(({ icon: Icon, label, value }) => (
