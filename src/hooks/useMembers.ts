@@ -4,7 +4,14 @@ import { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/type
 import { useToast } from '@/hooks/use-toast';
 
 export type Member = Tables<'members'> & {
-  profile?: { id: string; name: string; avatar_url: string | null; email: string | null } | null;
+  profile?: { 
+    id: string; 
+    name: string; 
+    avatar_url: string | null; 
+    email: string | null;
+    birth_date: string | null;
+    joined_church_at: string | null;
+  } | null;
   celula?: { id: string; name: string } | null;
   batismo?: boolean;
   encontro_com_deus?: boolean;
@@ -25,7 +32,7 @@ export function useMembers(celulaId?: string) {
           id, profile_id, celula_id, is_active, joined_at,
           batismo, encontro_com_deus, renovo, encontro_de_casais, curso_lidere,
           is_discipulado, is_lider_em_treinamento,
-          profile:profiles!members_profile_id_fkey(id, name, avatar_url, email),
+          profile:profiles!members_profile_id_fkey(id, name, avatar_url, email, birth_date, joined_church_at),
           celula:celulas!members_celula_id_fkey(id, name)
         `)
         .eq('is_active', true)
