@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2, ClipboardList, Users2, CalendarIcon, Image } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2, ClipboardList, Users2, CalendarIcon, Image, History } from 'lucide-react';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReports, useCreateWeeklyReport } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +17,7 @@ import { CasaisManager } from './cellleader/CasaisManager';
 import { BirthdayAlert } from './BirthdayAlert';
 import { CelulaPhotoUpload } from './cellleader/CelulaPhotoUpload';
 import { CellLeaderPhotosTab } from './cellleader/CellLeaderPhotosTab';
+import { CellLeaderHistoryTab } from './cellleader/CellLeaderHistoryTab';
 import { format, subDays, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -175,10 +176,14 @@ export function CellLeaderDashboard() {
 
       {selectedCelula ? (
         <Tabs defaultValue="relatorio" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="relatorio" className="flex items-center gap-2">
               <ClipboardList className="h-4 w-4" />
               <span className="hidden sm:inline">Relatório</span>
+            </TabsTrigger>
+            <TabsTrigger value="historico" className="flex items-center gap-2">
+              <History className="h-4 w-4" />
+              <span className="hidden sm:inline">Histórico</span>
             </TabsTrigger>
             <TabsTrigger value="membros" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
@@ -288,6 +293,10 @@ export function CellLeaderDashboard() {
                 </CardContent>
               </Card>
             </form>
+          </TabsContent>
+
+          <TabsContent value="historico">
+            <CellLeaderHistoryTab reports={existingReports || []} isLoading={reportsLoading} />
           </TabsContent>
 
           <TabsContent value="membros">

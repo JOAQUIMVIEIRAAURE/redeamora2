@@ -28,9 +28,10 @@ export function CelulaPhotoGallery({ reports, isLoading, showCelulaFilter = true
     ? reportsWithPhotos 
     : reportsWithPhotos.filter(r => r.celula_id === selectedCelula);
 
-  // Group by month
+  // Group by month - use meeting_date if available, fallback to week_start
   const groupedByMonth = filteredReports.reduce((acc, report) => {
-    const monthKey = format(new Date(report.week_start), 'MMMM yyyy', { locale: ptBR });
+    const reportDate = report.meeting_date || report.week_start;
+    const monthKey = format(new Date(reportDate), 'MMMM yyyy', { locale: ptBR });
     if (!acc[monthKey]) acc[monthKey] = [];
     acc[monthKey].push(report);
     return acc;
@@ -105,7 +106,7 @@ export function CelulaPhotoGallery({ reports, isLoading, showCelulaFilter = true
                         {report.celula?.name}
                       </p>
                       <p className="text-white/80 text-xs">
-                        {format(new Date(report.week_start), "dd 'de' MMMM", { locale: ptBR })}
+                        {format(new Date(report.meeting_date || report.week_start), "dd 'de' MMMM", { locale: ptBR })}
                       </p>
                     </div>
                   </div>
