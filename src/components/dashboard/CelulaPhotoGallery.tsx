@@ -138,7 +138,7 @@ export function CelulaPhotoGallery({ reports, isLoading, showCelulaFilter = true
               <div className="flex flex-wrap gap-2">
                 <Badge variant="outline">
                   <Calendar className="h-3 w-3 mr-1" />
-                  {format(new Date(selectedPhoto.week_start), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  {format(new Date(selectedPhoto.meeting_date || selectedPhoto.week_start), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </Badge>
                 <Badge variant="secondary">
                   {selectedPhoto.members_present} membros presentes
