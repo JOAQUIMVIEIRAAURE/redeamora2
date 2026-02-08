@@ -8,6 +8,7 @@ export interface Casal {
   celula_id: string;
   member1_id: string;
   member2_id: string;
+  photo_url: string | null;
   created_at: string;
   updated_at: string;
   member1?: Member | null;
@@ -77,6 +78,32 @@ export function useCreateCasal() {
     },
     onError: (error) => {
       toast({ title: 'Erro ao vincular casal', description: error.message, variant: 'destructive' });
+    },
+  });
+}
+
+export function useUpdateCasal() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ id, photo_url }: { id: string; photo_url: string | null }) => {
+      const { data, error } = await supabase
+        .from('casais')
+        .update({ photo_url })
+        .eq('id', id)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['casais'] });
+      toast({ title: 'Foto do casal atualizada!' });
+    },
+    onError: (error) => {
+      toast({ title: 'Erro ao atualizar foto', description: error.message, variant: 'destructive' });
     },
   });
 }

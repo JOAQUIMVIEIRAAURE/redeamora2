@@ -60,6 +60,7 @@ export type Database = {
           id: string
           member1_id: string
           member2_id: string
+          photo_url: string | null
           updated_at: string
         }
         Insert: {
@@ -68,6 +69,7 @@ export type Database = {
           id?: string
           member1_id: string
           member2_id: string
+          photo_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -76,6 +78,7 @@ export type Database = {
           id?: string
           member1_id?: string
           member2_id?: string
+          photo_url?: string | null
           updated_at?: string
         }
         Relationships: [

@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Users2, Plus, Loader2, Trash2, Link2, Heart } from 'lucide-react';
 import { useMembers } from '@/hooks/useMembers';
-import { useCasais, useDeleteCasal } from '@/hooks/useCasais';
+import { useCasais, useDeleteCasal, useUpdateCasal } from '@/hooks/useCasais';
 import { CasalFormDialog } from './CasalFormDialog';
+import { CasalPhotoUpload } from './CasalPhotoUpload';
 
 interface CasaisManagerProps {
   celulaId: string;
@@ -15,12 +16,17 @@ export function CasaisManager({ celulaId }: CasaisManagerProps) {
   const { data: members } = useMembers(celulaId);
   const { data: casais, isLoading } = useCasais(celulaId);
   const deleteCasal = useDeleteCasal();
+  const updateCasal = useUpdateCasal();
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleRemoveCasal = async (casalId: string) => {
     if (confirm('Tem certeza que deseja remover este vínculo de casal?')) {
       await deleteCasal.mutateAsync(casalId);
     }
+  };
+
+  const handlePhotoChange = async (casalId: string, photoUrl: string | null) => {
+    await updateCasal.mutateAsync({ id: casalId, photo_url: photoUrl });
   };
 
   // Get members that are already in a couple
@@ -83,31 +89,39 @@ export function CasaisManager({ celulaId }: CasaisManagerProps) {
                 className="border rounded-lg p-4 flex items-center justify-between bg-gradient-to-r from-primary/5 to-primary/10"
               >
                 <div className="flex items-center gap-4">
+                  {/* Casal Photo */}
+                  <CasalPhotoUpload
+                    casalId={casal.id}
+                    currentPhotoUrl={casal.photo_url}
+                    onPhotoChange={(url) => handlePhotoChange(casal.id, url)}
+                    isUpdating={updateCasal.isPending}
+                  />
+
                   {/* Member 1 */}
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={casal.member1?.profile?.avatar_url || undefined} />
-                      <AvatarFallback>
+                      <AvatarFallback className="text-xs">
                         {casal.member1?.profile?.name?.charAt(0) || 'M'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">
+                    <span className="font-medium text-sm">
                       {casal.member1?.profile?.name || 'Sem nome'}
                     </span>
                   </div>
 
                   {/* Link icon */}
-                  <Link2 className="h-5 w-5 text-primary" />
+                  <Link2 className="h-4 w-4 text-primary" />
 
                   {/* Member 2 */}
                   <div className="flex items-center gap-2">
-                    <Avatar className="h-10 w-10">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={casal.member2?.profile?.avatar_url || undefined} />
-                      <AvatarFallback>
+                      <AvatarFallback className="text-xs">
                         {casal.member2?.profile?.name?.charAt(0) || 'M'}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="font-medium">
+                    <span className="font-medium text-sm">
                       {casal.member2?.profile?.name || 'Sem nome'}
                     </span>
                   </div>
