@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 import { useCreateSupervisao } from '@/hooks/useSupervisoes';
+import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 
 interface Celula {
@@ -52,6 +53,7 @@ type AvaliacaoKey = typeof avaliacaoItems[number]['key'];
 
 export function SupervisaoFormDialog({ open, onOpenChange, supervisorId, celulas }: SupervisaoFormDialogProps) {
   const createSupervisao = useCreateSupervisao();
+  const { toast } = useToast();
   
   const [celulaId, setCelulaId] = useState('');
   const [dataSupervisao, setDataSupervisao] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -124,7 +126,39 @@ export function SupervisaoFormDialog({ open, onOpenChange, supervisorId, celulas
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!celulaId || !dataSupervisao || !horarioInicio || !horarioTermino) {
+    if (!celulaId) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, selecione uma célula.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!dataSupervisao) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, selecione a data.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!horarioInicio || !horarioTermino) {
+      toast({
+        title: "Erro de validação",
+        description: "Por favor, informe o horário de início e término.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!supervisorId) {
+      toast({
+        title: "Erro interno",
+        description: "Identificador do supervisor não encontrado.",
+        variant: "destructive",
+      });
       return;
     }
 
