@@ -52,17 +52,20 @@ export function LeadershipCoupleSelect({
     <div className="space-y-2">
       {label && <Label>{label}</Label>}
       <div className="flex gap-2">
-        <Select value={value || ''} onValueChange={(v) => onChange(v || null)}>
+        <Select 
+          value={value || 'no_couple_selected'} 
+          onValueChange={(v) => onChange(v === 'no_couple_selected' ? null : v)}
+        >
           <SelectTrigger className="flex-1">
             <SelectValue placeholder={placeholder}>
               {value && couples?.find(c => c.id === value) 
                 ? getCoupleDisplayName(couples.find(c => c.id === value))
-                : placeholder
+                : (value === null ? "Nenhum" : placeholder)
               }
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Nenhum</SelectItem>
+            <SelectItem value="no_couple_selected">Nenhum</SelectItem>
             {couples?.map((couple) => (
               <SelectItem key={couple.id} value={couple.id}>
                 <div className="flex items-center gap-2">
