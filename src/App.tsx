@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { RoleProvider } from "@/contexts/RoleContext";
 import { RoleProtectedRoute } from "@/components/RoleProtectedRoute";
+import { Analytics } from "@vercel/analytics/react";
 
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
@@ -38,6 +39,7 @@ const App = () => (
           </Routes>
         </RoleProvider>
       </BrowserRouter>
+      <Analytics />
     </TooltipProvider>
   </QueryClientProvider>
 );
