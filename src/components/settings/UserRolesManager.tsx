@@ -52,36 +52,56 @@ export function UserRolesManager() {
   const [pendingRoleChanges, setPendingRoleChanges] = useState<Record<string, AppRole[]>>({});
   const [isSaving, setIsSaving] = useState(false);
 
-  // Fetch all profiles with their roles
-  const { data: profilesWithRoles, isLoading: profilesLoading } = useQuery({
+  // Fetch profiles with roles using a more optimized approach
+  const { data: profilesWithRoles, isLoading: profilesLoading, error: profilesError } = useQuery({
     queryKey: ['profiles-with-roles'],
     queryFn: async () => {
-      const { data: profiles, error: profilesError } = await supabase
+      console.log('Iniciando busca de perfis...');
+      
+      // Busca perfis
+      const { data: profiles, error: profilesErr } = await supabase
         .from('profiles')
         .select('*')
         .order('name');
-      if (profilesError) throw profilesError;
+      
+      if (profilesErr) {
+        console.error('Erro ao buscar perfis:', profilesErr);
+        throw profilesErr;
+      }
 
-      const { data: userRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-      if (rolesError) throw rolesError;
-
-      // Map roles to profiles by user_id
-      const rolesByUserId: Record<string, AppRole[]> = {};
-      userRoles?.forEach(ur => {
-        if (!rolesByUserId[ur.user_id]) {
-          rolesByUserId[ur.user_id] = [];
+      // Busca roles apenas se houver perfis
+      let rolesByUserId: Record<string, AppRole[]> = {};
+      
+      if (profiles && profiles.length > 0) {
+        const { data: userRoles, error: rolesErr } = await supabase
+          .from('user_roles')
+          .select('*');
+          
+        if (rolesErr) {
+          console.error('Erro ao buscar roles:', rolesErr);
+          // Não vamos travar a tela se falhar as roles, mas logar o erro
+        } else {
+          userRoles?.forEach(ur => {
+            if (!rolesByUserId[ur.user_id]) {
+              rolesByUserId[ur.user_id] = [];
+            }
+            rolesByUserId[ur.user_id].push(ur.role as AppRole);
+          });
         }
-        rolesByUserId[ur.user_id].push(ur.role as AppRole);
-      });
+      }
 
       return (profiles || []).map(profile => ({
         ...profile,
         roles: rolesByUserId[profile.user_id] || [],
       })) as ProfileWithRoles[];
     },
+    // Adiciona retry falso para falhar rápido se for erro de permissão
+    retry: 1,
   });
+
+  if (profilesError) {
+    console.error('Erro fatal na query:', profilesError);
+  }
 
   const { data: coordenacoes } = useCoordenacoes();
   const { data: supervisores, isLoading: supervisoresLoading } = useSupervisores();
@@ -91,27 +111,44 @@ export function UserRolesManager() {
   // Create profile mutation
   const createProfile = useMutation({
     mutationFn: async (data: { name: string; email?: string }) => {
+      console.log('Tentando criar perfil:', data);
+      
+      // Tenta criar com um ID gerado, mas sabendo que pode falhar se não houver usuário Auth correspondente
+      const fakeUserId = crypto.randomUUID();
+      
       const { data: profile, error } = await supabase
         .from('profiles')
         .insert({
           name: data.name,
           email: data.email || null,
-          user_id: crypto.randomUUID(),
+          user_id: fakeUserId,
         })
         .select()
         .single();
-      if (error) throw error;
+
+      if (error) {
+        console.error('Erro ao criar perfil:', error);
+        throw error;
+      }
       return profile;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profiles-with-roles'] });
-      toast({ title: 'Sucesso!', description: 'Perfil criado com sucesso.' });
+      setIsCreateDialogOpen(false);
       setNewProfileName('');
       setNewProfileEmail('');
-      setIsCreateDialogOpen(false);
+      toast({
+        title: 'Perfil criado',
+        description: 'O perfil foi criado com sucesso. Note que este usuário não tem login (apenas registro interno).',
+      });
     },
-    onError: (error) => {
-      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
+    onError: (error: any) => {
+      console.error('Erro detalhado na criação:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao criar perfil',
+        description: error.message || 'Verifique se você tem permissão de administrador.',
+      });
     },
   });
 
@@ -484,7 +521,8 @@ export function UserRolesManager() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="flex w-fit items-center gap-1">
+                            <FolderTree className="h-3 w-3" />
                             {supervisor.coordenacao?.name || 'N/A'}
                           </Badge>
                         </TableCell>
@@ -493,7 +531,7 @@ export function UserRolesManager() {
                             variant="ghost"
                             size="sm"
                             onClick={() => {
-                              if (confirm('Remover este supervisor?')) {
+                              if (confirm('Remover supervisor?')) {
                                 deleteSupervisor.mutate(supervisor.id);
                               }
                             }}
@@ -518,47 +556,36 @@ export function UserRolesManager() {
         </TabsContent>
       </Tabs>
 
-      {/* Create Profile Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo Perfil</DialogTitle>
+            <DialogTitle>Criar Novo Perfil</DialogTitle>
             <DialogDescription>
-              Cadastre um novo perfil para atribuir papéis no sistema
+              Adicione um novo membro ao sistema.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome *</Label>
+              <Label>Nome</Label>
               <Input
-                id="name"
+                placeholder="Nome completo"
                 value={newProfileName}
                 onChange={(e) => setNewProfileName(e.target.value)}
-                placeholder="Nome completo"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email (opcional)</Label>
+              <Label>Email (Opcional)</Label>
               <Input
-                id="email"
+                placeholder="email@exemplo.com"
                 type="email"
                 value={newProfileEmail}
                 onChange={(e) => setNewProfileEmail(e.target.value)}
-                placeholder="email@exemplo.com"
               />
             </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button 
-                onClick={handleCreateProfile} 
-                disabled={!newProfileName.trim() || createProfile.isPending}
-              >
-                {createProfile.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Criar Perfil
-              </Button>
-            </div>
+            <Button onClick={handleCreateProfile} className="w-full" disabled={createProfile.isPending}>
+              {createProfile.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Criar Perfil
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
