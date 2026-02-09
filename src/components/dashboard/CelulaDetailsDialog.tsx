@@ -316,6 +316,14 @@ export function CelulaDetailsDialog({ open, onOpenChange, celulaId, celulaName }
                           <CardContent className="py-4">
                             <div className="flex items-center justify-between gap-4">
                               <div className="flex items-center gap-4">
+                                {/* Couple Photo */}
+                                <Avatar className="h-12 w-12">
+                                  <AvatarImage src={casal.photo_url || undefined} />
+                                  <AvatarFallback>
+                                    <Users2 className="h-5 w-5 text-muted-foreground" />
+                                  </AvatarFallback>
+                                </Avatar>
+
                                 <div className="flex items-center gap-2">
                                   <Avatar className="h-10 w-10">
                                     <AvatarImage src={casal.member1?.profile?.avatar_url || undefined} />
