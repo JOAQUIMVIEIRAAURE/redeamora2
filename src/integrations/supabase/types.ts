@@ -349,6 +349,51 @@ export type Database = {
           },
         ]
       }
+      multiplicacoes: {
+        Row: {
+          celula_destino_id: string
+          celula_origem_id: string
+          created_at: string
+          data_multiplicacao: string
+          id: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          celula_destino_id: string
+          celula_origem_id: string
+          created_at?: string
+          data_multiplicacao: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          celula_destino_id?: string
+          celula_origem_id?: string
+          created_at?: string
+          data_multiplicacao?: string
+          id?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "multiplicacoes_celula_destino_id_fkey"
+            columns: ["celula_destino_id"]
+            isOneToOne: true
+            referencedRelation: "celulas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "multiplicacoes_celula_origem_id_fkey"
+            columns: ["celula_origem_id"]
+            isOneToOne: false
+            referencedRelation: "celulas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
