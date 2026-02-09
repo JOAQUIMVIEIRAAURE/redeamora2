@@ -3,13 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, FileSpreadsheet, LayoutGrid, Home } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, FileSpreadsheet, LayoutGrid, Home, GitBranch } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useCelulas } from '@/hooks/useCelulas';
 import { useWeeklyReports, WeeklyReport, DateRangeFilter } from '@/hooks/useWeeklyReports';
 import { useToast } from '@/hooks/use-toast';
 import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
+import { MultiplicacoesTab } from './MultiplicacoesTab';
 import { exportToExcel } from '@/utils/exportReports';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -204,87 +206,107 @@ export function AdminDashboard() {
         ))}
       </div>
 
-      {/* Reports by Rede Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Network className="h-5 w-5" />
+      {/* Tabs for Reports and Multiplicações */}
+      <Tabs defaultValue="redes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="redes" className="flex items-center gap-2">
+            <Network className="h-4 w-4" />
             Dados por Rede
-          </CardTitle>
-          <CardDescription>
-            {Object.keys(reportsByRede).length} rede(s) com relatórios esta semana
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {Object.keys(reportsByRede).length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Rede</TableHead>
-                  <TableHead className="text-center">Coord.</TableHead>
-                  <TableHead className="text-center">Células</TableHead>
-                  <TableHead className="text-center">Membros</TableHead>
-                  <TableHead className="text-center">Líderes Trein.</TableHead>
-                  <TableHead className="text-center">Discipulados</TableHead>
-                  <TableHead className="text-center">Visitantes</TableHead>
-                  <TableHead className="text-center">Crianças</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {Object.entries(reportsByRede).map(([redeId, rede]) => {
-                  const total = rede.totals.members_present + rede.totals.leaders_in_training + 
-                    rede.totals.discipleships + rede.totals.visitors + rede.totals.children;
-                  return (
-                    <TableRow key={redeId}>
-                      <TableCell className="font-medium">{rede.name}</TableCell>
+          </TabsTrigger>
+          <TabsTrigger value="multiplicacoes" className="flex items-center gap-2">
+            <GitBranch className="h-4 w-4" />
+            Multiplicação
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="redes">
+          {/* Reports by Rede Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Network className="h-5 w-5" />
+                Dados por Rede
+              </CardTitle>
+              <CardDescription>
+                {Object.keys(reportsByRede).length} rede(s) com relatórios esta semana
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {Object.keys(reportsByRede).length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Rede</TableHead>
+                      <TableHead className="text-center">Coord.</TableHead>
+                      <TableHead className="text-center">Células</TableHead>
+                      <TableHead className="text-center">Membros</TableHead>
+                      <TableHead className="text-center">Líderes Trein.</TableHead>
+                      <TableHead className="text-center">Discipulados</TableHead>
+                      <TableHead className="text-center">Visitantes</TableHead>
+                      <TableHead className="text-center">Crianças</TableHead>
+                      <TableHead className="text-center">Total</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(reportsByRede).map(([redeId, rede]) => {
+                      const total = rede.totals.members_present + rede.totals.leaders_in_training + 
+                        rede.totals.discipleships + rede.totals.visitors + rede.totals.children;
+                      return (
+                        <TableRow key={redeId}>
+                          <TableCell className="font-medium">{rede.name}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline">{rede.coordenacoes.length}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline">{rede.cellCount}</Badge>
+                          </TableCell>
+                          <TableCell className="text-center">{rede.totals.members_present}</TableCell>
+                          <TableCell className="text-center">{rede.totals.leaders_in_training}</TableCell>
+                          <TableCell className="text-center">{rede.totals.discipleships}</TableCell>
+                          <TableCell className="text-center">{rede.totals.visitors}</TableCell>
+                          <TableCell className="text-center">{rede.totals.children}</TableCell>
+                          <TableCell className="text-center">
+                            <Badge>{total}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                    {/* Grand Total Row */}
+                    <TableRow className="bg-muted/50 font-bold">
+                      <TableCell>TOTAL GERAL</TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline">{rede.coordenacoes.length}</Badge>
+                        <Badge variant="outline">{coordenacoes?.length || 0}</Badge>
                       </TableCell>
                       <TableCell className="text-center">
-                        <Badge variant="outline">{rede.cellCount}</Badge>
+                        <Badge variant="outline">{currentReports.length}</Badge>
                       </TableCell>
-                      <TableCell className="text-center">{rede.totals.members_present}</TableCell>
-                      <TableCell className="text-center">{rede.totals.leaders_in_training}</TableCell>
-                      <TableCell className="text-center">{rede.totals.discipleships}</TableCell>
-                      <TableCell className="text-center">{rede.totals.visitors}</TableCell>
-                      <TableCell className="text-center">{rede.totals.children}</TableCell>
+                      <TableCell className="text-center">{grandTotals.members_present}</TableCell>
+                      <TableCell className="text-center">{grandTotals.leaders_in_training}</TableCell>
+                      <TableCell className="text-center">{grandTotals.discipleships}</TableCell>
+                      <TableCell className="text-center">{grandTotals.visitors}</TableCell>
+                      <TableCell className="text-center">{grandTotals.children}</TableCell>
                       <TableCell className="text-center">
-                        <Badge>{total}</Badge>
+                        <Badge variant="default">
+                          {grandTotals.members_present + grandTotals.leaders_in_training + 
+                            grandTotals.discipleships + grandTotals.visitors + grandTotals.children}
+                        </Badge>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-                {/* Grand Total Row */}
-                <TableRow className="bg-muted/50 font-bold">
-                  <TableCell>TOTAL GERAL</TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="outline">{coordenacoes?.length || 0}</Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="outline">{currentReports.length}</Badge>
-                  </TableCell>
-                  <TableCell className="text-center">{grandTotals.members_present}</TableCell>
-                  <TableCell className="text-center">{grandTotals.leaders_in_training}</TableCell>
-                  <TableCell className="text-center">{grandTotals.discipleships}</TableCell>
-                  <TableCell className="text-center">{grandTotals.visitors}</TableCell>
-                  <TableCell className="text-center">{grandTotals.children}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="default">
-                      {grandTotals.members_present + grandTotals.leaders_in_training + 
-                        grandTotals.discipleships + grandTotals.visitors + grandTotals.children}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum relatório enviado esta semana
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum relatório enviado esta semana
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="multiplicacoes">
+          <MultiplicacoesTab />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

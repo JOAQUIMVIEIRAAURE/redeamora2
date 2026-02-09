@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, FileSpreadsheet, ChevronDown, ChevronUp, Eye, ClipboardCheck, Image, Sparkles, History } from 'lucide-react';
+import { Users, UserCheck, Heart, UserPlus, Baby, Loader2, Network, FileSpreadsheet, ChevronDown, ChevronUp, Eye, ClipboardCheck, Image, Sparkles, History, GitBranch } from 'lucide-react';
 import { useRedes } from '@/hooks/useRedes';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
 import { useCelulas } from '@/hooks/useCelulas';
@@ -19,6 +19,7 @@ import { SupervisoesList } from './SupervisoesList';
 import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { CelulaPhotoGallery } from './CelulaPhotoGallery';
 import { AIInsightsPanel } from './AIInsightsPanel';
+import { MultiplicacoesTab } from './MultiplicacoesTab';
 import { ReportsHistoryTable } from '@/components/reports/ReportsHistoryTable';
 import { exportToExcel } from '@/utils/exportReports';
 import { format, subDays } from 'date-fns';
@@ -286,6 +287,10 @@ export function NetworkLeaderDashboard() {
                 <Network className="h-4 w-4" />
                 Coordenações
               </TabsTrigger>
+              <TabsTrigger value="multiplicacoes" className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Multiplicação
+              </TabsTrigger>
               <TabsTrigger value="historico" className="flex items-center gap-2">
                 <History className="h-4 w-4" />
                 Histórico
@@ -305,6 +310,10 @@ export function NetworkLeaderDashboard() {
                 </TabsTrigger>
               )}
             </TabsList>
+
+            <TabsContent value="multiplicacoes">
+              <MultiplicacoesTab />
+            </TabsContent>
 
             <TabsContent value="insights">
               <AIInsightsPanel 
