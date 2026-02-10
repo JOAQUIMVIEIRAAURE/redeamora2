@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Users, Plus, Loader2, Trash2, ChevronDown, ChevronUp, Cake, Church, Calendar, Save } from 'lucide-react';
 import { Member, useMembers, useUpdateMember, useRemoveMember } from '@/hooks/useMembers';
+import { useCasais } from '@/hooks/useCasais';
 import { MemberFormDialogSimple } from './MemberFormDialogSimple';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { supabase } from '@/integrations/supabase/client';
@@ -46,6 +47,7 @@ function formatChurchTime(joinedAt: string | null): string {
 
 export function MembersList({ celulaId }: MembersListProps) {
   const { data: members, isLoading } = useMembers(celulaId);
+  const { data: casais } = useCasais(celulaId);
   const updateMember = useUpdateMember();
   const removeMember = useRemoveMember();
   const queryClient = useQueryClient();
@@ -186,6 +188,7 @@ export function MembersList({ celulaId }: MembersListProps) {
             members?.map((member) => {
               const profile = member.profile as any;
               const isEditing = !!editingDates[member.id];
+              const memberCasal = casais?.find(c => c.member1_id === member.id || c.member2_id === member.id);
               
               return (
                 <Collapsible
@@ -202,12 +205,20 @@ export function MembersList({ celulaId }: MembersListProps) {
                     <CollapsibleTrigger asChild>
                       <div className="flex items-center justify-between cursor-pointer hover:bg-muted/50 rounded-md p-2 -m-2">
                         <div className="flex items-center gap-3">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={profile?.avatar_url || undefined} />
-                            <AvatarFallback>
-                              {profile?.name?.charAt(0) || 'M'}
-                            </AvatarFallback>
-                          </Avatar>
+                          <div className="flex -space-x-3">
+                            <Avatar className="h-10 w-10 border-2 border-background">
+                              <AvatarImage src={profile?.avatar_url || undefined} />
+                              <AvatarFallback>
+                                {profile?.name?.charAt(0) || 'M'}
+                              </AvatarFallback>
+                            </Avatar>
+                            {memberCasal?.photo_url && (
+                              <Avatar className="h-10 w-10 border-2 border-background ring-2 ring-primary/20">
+                                <AvatarImage src={memberCasal.photo_url} />
+                                <AvatarFallback><Users className="h-4 w-4" /></AvatarFallback>
+                              </Avatar>
+                            )}
+                          </div>
                           <div>
                             <p className="font-medium">{profile?.name || 'Sem nome'}</p>
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -299,17 +310,17 @@ export function MembersList({ celulaId }: MembersListProps) {
                                 }
                                 disabled={updateMember.isPending}
                               />
-                              <label
+                              <Label
                                 htmlFor={`${member.id}-${key}`}
-                                className="text-sm cursor-pointer"
+                                className="text-sm font-normal cursor-pointer"
                               >
                                 {label}
-                              </label>
+                              </Label>
                             </div>
                           ))}
                         </div>
                       </div>
-                      
+
                       <div className="flex justify-end pt-2">
                         <Button
                           variant="destructive"
@@ -317,8 +328,8 @@ export function MembersList({ celulaId }: MembersListProps) {
                           onClick={() => handleRemoveMember(member.id)}
                           disabled={removeMember.isPending}
                         >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Remover
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Remover Membro
                         </Button>
                       </div>
                     </CollapsibleContent>
