@@ -1,210 +1,227 @@
-import { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { GitBranch, Plus, Save, Loader2, Trash2 } from 'lucide-react';
-import { useCelulas } from '@/hooks/useCelulas';
-import { useMultiplicacoesJson } from '@/hooks/useMultiplicacoesJson';
+import { useMultiplicacoes, useCreateMultiplicacao, useDeleteMultiplicacao } from '@/hooks/useMultiplicacoes';
+import { GitBranch, Plus, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
-interface MultiplicacoesVisualProps {
-  celulas?: { id: string; name: string; leader_id?: string | null }[];
+interface MultiplicacaoNode {
+  id: string; // ID da célula (destino)
+  parentId: string; // ID da célula origem
+  multiplicationId: string; // ID do registro na tabela
+  multiplicationDate?: string;
+  notes?: string;
 }
 
-export function MultiplicacoesVisual({ celulas: propCelulas }: MultiplicacoesVisualProps) {
-  const { data: fetchedCelulas } = useCelulas();
-  const celulas = propCelulas || fetchedCelulas || [];
-  
-  const { treeData, isLoading, addMultiplicacao, removeMultiplicacao } = useMultiplicacoesJson();
-  
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    parentId: '',
-    childId: '',
-    date: format(new Date(), 'yyyy-MM-dd'),
-    notes: ''
-  });
-  const [isSaving, setIsSaving] = useState(false);
+interface MultiplicacoesVisualProps {
+  celulas: { id: string; name: string }[];
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.parentId || !formData.childId) return;
+export function MultiplicacoesVisual({ celulas }: MultiplicacoesVisualProps) {
+  const { data: multiplicacoes, isLoading } = useMultiplicacoes();
+  const createMultiplicacao = useCreateMultiplicacao();
+  const deleteMultiplicacao = useDeleteMultiplicacao();
+  
+  const [selectedParent, setSelectedParent] = useState<string>('');
+  const [selectedChild, setSelectedChild] = useState<string>('');
+  const [date, setDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
 
-    if (formData.parentId === formData.childId) {
-      alert("Uma célula não pode ser mãe dela mesma.");
-      return;
+  // Transformar lista plana em estrutura de árvore
+  const treeData = useMemo(() => {
+    const map: Record<string, MultiplicacaoNode> = {};
+    if (!multiplicacoes) return map;
+
+    multiplicacoes.forEach(m => {
+      map[m.celula_destino_id] = {
+        id: m.celula_destino_id,
+        parentId: m.celula_origem_id,
+        multiplicationId: m.id,
+        multiplicationDate: m.data_multiplicacao,
+        notes: m.notes || undefined
+      };
+    });
+    return map;
+  }, [multiplicacoes]);
+
+  // Identificar raízes (células que são origem mas não são destino de ninguém na tabela)
+  const rootIds = useMemo(() => {
+    if (!multiplicacoes) return [];
+    
+    // Todos que são origem
+    const origens = new Set(multiplicacoes.map(m => m.celula_origem_id));
+    // Todos que são destino
+    const destinos = new Set(multiplicacoes.map(m => m.celula_destino_id));
+    
+    // Raízes são origens que não estão na lista de destinos
+    return Array.from(origens).filter(id => !destinos.has(id));
+  }, [multiplicacoes]);
+
+  const handleAdd = async () => {
+    if (!selectedChild || !selectedParent) return;
+    
+    try {
+      await createMultiplicacao.mutateAsync({
+        celula_origem_id: selectedParent,
+        celula_destino_id: selectedChild,
+        data_multiplicacao: date
+      });
+      setSelectedChild('');
+    } catch (error) {
+      console.error(error);
     }
+  };
 
-    setIsSaving(true);
-    await addMultiplicacao(formData.childId, formData.parentId, formData.date, formData.notes);
-    setIsSaving(false);
-    setIsDialogOpen(false);
-    setFormData({ parentId: '', childId: '', date: format(new Date(), 'yyyy-MM-dd'), notes: '' });
+  const handleDelete = async (multiplicacaoId: string) => {
+    try {
+      await deleteMultiplicacao.mutateAsync(multiplicacaoId);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const renderNode = (celulaId: string, level = 0) => {
     const celula = celulas.find(c => c.id === celulaId);
-    if (!celula) return null;
+    const displayName = celula ? celula.name : 'Célula Desconhecida';
 
-    const children = Object.values(treeData)
+    // Encontrar filhos deste nó (quem tem este ID como parentId)
+    const childrenIds = Object.values(treeData)
       .filter(node => node.parentId === celulaId)
       .map(node => node.id);
 
-    const nodeData = treeData[celulaId];
+    const nodeData = treeData[celulaId]; // Dados da multiplicação onde esta célula é o DESTINO
+    
+    const isRoot = !nodeData; 
 
     return (
-      <div key={celulaId} className="relative" style={{ marginLeft: level * 32 }}>
+      <div key={celulaId} className="relative" style={{ marginLeft: level > 0 ? 24 : 0 }}>
         {level > 0 && (
-          <div className="absolute -left-4 top-6 w-4 h-[2px] bg-muted-foreground/30" />
-        )}
-        {level > 0 && (
-          <div className="absolute -left-4 -top-4 w-[2px] h-[calc(100%+16px)] bg-muted-foreground/30" />
+          <div className="absolute -left-3 top-0 bottom-0 w-[2px] bg-border" />
         )}
         
-        <Card className="mb-4 relative border-l-4 border-l-primary/50">
-          <CardContent className="p-4 flex items-center justify-between">
+        <Card className={`mb-2 relative border-l-4 ${isRoot ? 'border-l-primary/50' : 'border-l-primary'}`}>
+           {level > 0 && (
+               <div className="absolute -left-3 top-6 w-3 h-[2px] bg-border" />
+           )}
+          <CardContent className="p-3 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold">{celula.name}</span>
+                <span className="font-semibold">{displayName}</span>
                 {nodeData?.multiplicationDate && (
-                  <Badge variant="secondary" className="text-xs">
-                    Desde {format(new Date(nodeData.multiplicationDate), 'MMM yyyy', { locale: ptBR })}
+                  <Badge variant="outline" className="text-xs">
+                    {/* Fix UTC date display by appending time */}
+                    {format(new Date(nodeData.multiplicationDate + 'T12:00:00'), 'dd MMM yyyy', { locale: ptBR })}
                   </Badge>
                 )}
+                {isRoot && <Badge variant="secondary" className="text-xs">Raiz</Badge>}
               </div>
-              <div className="text-sm text-muted-foreground mt-1">
-                {celula.leader_id ? 'Com líder' : 'Sem líder'} • {children.length} {children.length === 1 ? 'filha' : 'filhas'}
-              </div>
+              {celula && <p className="text-xs text-muted-foreground">Líder: {celula.name.split(' - ')[1] || 'N/A'}</p>}
             </div>
-
-            {nodeData?.parentId && (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-destructive hover:bg-destructive/10"
-                onClick={() => {
-                  if (confirm(`Desvincular ${celula.name} da sua célula mãe?`)) {
-                    removeMultiplicacao(celulaId);
-                  }
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+            
+            {!isRoot && nodeData && (
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => handleDelete(nodeData.multiplicationId)} 
+                    className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
+                    title="Remover relação"
+                >
+                    <Trash2 className="h-4 w-4" />
+                </Button>
             )}
           </CardContent>
         </Card>
-
-        <div className="pl-4 border-l border-dashed border-muted-foreground/20 ml-4">
-          {children.map(childId => renderNode(childId, level))}
-        </div>
+        
+        {childrenIds.length > 0 && (
+            <div className="pl-2 mt-2 border-l border-dashed border-muted-foreground/20 ml-2">
+                {childrenIds.map(childId => renderNode(childId, level + 1))}
+            </div>
+        )}
       </div>
     );
   };
 
-  // Encontrar células raiz (aquelas que não têm pai definido na árvore)
-  const roots = celulas.filter(c => !treeData[c.id]?.parentId);
+  // Células disponíveis para serem filhas (que ainda não são destino de ninguém)
+  const availableChildren = celulas.filter(c => !treeData[c.id]);
+  
+  // Células disponíveis para serem pais
+  const availableParents = celulas;
 
   if (isLoading) {
-    return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+      return <div className="p-8 text-center">Carregando árvore...</div>;
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-medium">Árvore de Multiplicação</h3>
-          <p className="text-sm text-muted-foreground">Visualize e gerencie a linhagem das células</p>
-        </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Multiplicação
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Registrar Multiplicação</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label>Célula Mãe</Label>
-                <Select 
-                  value={formData.parentId} 
-                  onValueChange={(val) => setFormData(prev => ({ ...prev, parentId: val }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a célula mãe" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {celulas.map(c => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <GitBranch className="h-5 w-5" />
+            Árvore de Multiplicação (SQL)
+          </CardTitle>
+          <CardDescription>
+            Gerencie a genealogia das células. Dados salvos no banco de dados.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="flex flex-col md:flex-row gap-4 items-end mb-6 p-4 bg-muted/30 rounded-lg">
+                <div className="space-y-2 flex-1">
+                    <Label>Célula Mãe</Label>
+                    <Select value={selectedParent} onValueChange={setSelectedParent}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione a mãe" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableParents.map(p => (
+                                <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Célula Filha (Nova)</Label>
-                <Select 
-                  value={formData.childId} 
-                  onValueChange={(val) => setFormData(prev => ({ ...prev, childId: val }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a célula filha" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {celulas
-                      .filter(c => c.id !== formData.parentId && !treeData[c.id]?.parentId) // Filtra células que já têm mãe
-                      .map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div className="space-y-2 flex-1">
+                    <Label>Célula Filha (Nova)</Label>
+                    <Select value={selectedChild} onValueChange={setSelectedChild}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione a filha" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {availableChildren.map(c => (
+                                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Data da Multiplicação</Label>
-                <Input 
-                  type="date" 
-                  value={formData.date}
-                  onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                />
-              </div>
+                <div className="space-y-2 w-40">
+                    <Label>Data</Label>
+                    <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+                </div>
 
-              <DialogFooter>
-                <Button type="submit" disabled={isSaving}>
-                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
-                  Salvar
+                <Button onClick={handleAdd} disabled={!selectedChild || !selectedParent || createMultiplicacao.isPending}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar
                 </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </div>
 
-      <div className="space-y-4">
-        {roots.length > 0 ? (
-          roots.map(root => {
-             // Renderiza apenas raízes que têm filhos ou que foram explicitamente adicionadas à árvore
-             const hasChildren = Object.values(treeData).some(node => node.parentId === root.id);
-             if (!hasChildren && !treeData[root.id]) return null;
-             return renderNode(root.id);
-          })
-        ) : (
-          <div className="text-center py-12 text-muted-foreground border rounded-lg bg-muted/10">
-            <GitBranch className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <p>Nenhuma multiplicação registrada.</p>
-            <p className="text-sm">Clique em "Nova Multiplicação" para começar.</p>
-          </div>
-        )}
-      </div>
+            <div className="mt-6 border rounded-lg p-6 min-h-[300px] bg-background">
+                {rootIds.length === 0 && Object.keys(treeData).length === 0 ? (
+                    <div className="text-muted-foreground text-center p-8">
+                        Nenhuma multiplicação registrada. Selecione uma mãe e uma filha acima para começar.
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {rootIds.map(rootId => renderNode(rootId))}
+                    </div>
+                )}
+            </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
