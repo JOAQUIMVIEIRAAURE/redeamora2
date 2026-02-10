@@ -21,6 +21,7 @@ import { LeaderBirthdayAlert } from './LeaderBirthdayAlert';
 import { CelulaPhotoGallery } from './CelulaPhotoGallery';
 import { AIInsightsPanel } from './AIInsightsPanel';
 import { MultiplicacoesTab } from './MultiplicacoesTab';
+import { MultiplicacoesVisual } from './MultiplicacoesVisual';
 import { ReportsHistoryTable } from '@/components/reports/ReportsHistoryTable';
 import { exportToExcel } from '@/utils/exportReports';
 import { format, subDays } from 'date-fns';
@@ -107,111 +108,30 @@ export function NetworkLeaderDashboard() {
     });
   };
 
-  // Show all redes in controlled environment
-  const userRedes = redes || [];
-  
-  const selectedRedeData = userRedes.find(r => r.id === selectedRede);
-
-  // Use all reports in the date range
-  const currentReports = redeData?.reports || [];
-
-  // Define type for coordenacao data
-  interface CoordenacaoData {
-    name: string;
-    reports: WeeklyReport[];
-    totals: {
-      members_present: number;
-      leaders_in_training: number;
-      discipleships: number;
-      visitors: number;
-      children: number;
-    };
-  }
-
-  // Group reports by coordenacao
-  const reportsByCoordenacao = currentReports.reduce<Record<string, CoordenacaoData>>((acc, report) => {
-    const coordId = report.celula?.coordenacao_id;
-    const coordName = report.celula?.coordenacao?.name || 'Sem Coordenação';
-    if (!coordId) return acc;
-    
-    if (!acc[coordId]) {
-      acc[coordId] = {
-        name: coordName,
-        reports: [],
-        totals: {
-          members_present: 0,
-          leaders_in_training: 0,
-          discipleships: 0,
-          visitors: 0,
-          children: 0,
-        }
-      };
-    }
-    
-    acc[coordId].reports.push(report);
-    acc[coordId].totals.members_present += report.members_present;
-    acc[coordId].totals.leaders_in_training += report.leaders_in_training;
-    acc[coordId].totals.discipleships += report.discipleships;
-    acc[coordId].totals.visitors += report.visitors;
-    acc[coordId].totals.children += report.children;
-    
-    return acc;
-  }, {});
-
-  // Calculate grand totals
-  const grandTotals = Object.values(reportsByCoordenacao).reduce((acc, coord) => ({
-    members_present: acc.members_present + coord.totals.members_present,
-    leaders_in_training: acc.leaders_in_training + coord.totals.leaders_in_training,
-    discipleships: acc.discipleships + coord.totals.discipleships,
-    visitors: acc.visitors + coord.totals.visitors,
-    children: acc.children + coord.totals.children,
-  }), {
-    members_present: 0,
-    leaders_in_training: 0,
-    discipleships: 0,
-    visitors: 0,
-    children: 0,
-  });
-
   const formatDateRangeDisplay = () => {
     return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
   };
 
   const handleExportExcel = () => {
-    if (!currentReports.length || !celulas || !coordenacoes) {
+    if (!redeData?.reports?.length || !celulas || !coordenacoes) {
       toast({
         title: 'Aviso',
-        description: 'Nenhum dado para exportar',
+        description: 'Não há dados suficientes para exportar.',
         variant: 'destructive',
       });
       return;
     }
 
-    // Filter coordenacoes for this rede only
-    const redeCoord = coordenacoes.filter(c => c.rede_id === selectedRede);
-    const redeCelulas = celulas.filter(c => redeCoord.some(coord => coord.id === c.coordenacao_id));
+    const redeName = redes?.find(r => r.id === selectedRede)?.name || 'Rede';
+    const filename = `Relatorio_${redeName}_${getDateString(dateRange.from)}_${getDateString(dateRange.to)}`;
 
-    exportToExcel({
-      reports: currentReports,
-      celulas: redeCelulas,
-      coordenacoes: redeCoord,
-      periodLabel: formatDateRangeDisplay(),
-    });
+    exportToExcel(redeData.reports, celulas, coordenacoes, filename);
     
     toast({
-      title: 'Sucesso!',
-      description: 'Arquivo Excel exportado com sucesso',
+      title: 'Sucesso',
+      description: 'Relatório exportado com sucesso!',
     });
   };
-
-  const statCards = [
-    { icon: Users, label: 'Total Membros', value: grandTotals.members_present },
-    { icon: UserCheck, label: 'Líderes em Treinamento', value: grandTotals.leaders_in_training },
-    { icon: Heart, label: 'Discipulados', value: grandTotals.discipleships },
-    { icon: UserPlus, label: 'Visitantes', value: grandTotals.visitors },
-    { icon: Baby, label: 'Crianças', value: grandTotals.children },
-    { icon: ClipboardCheck, label: 'Supervisões', value: supervisoes?.length || 0 },
-  ];
 
   if (redesLoading) {
     return (
@@ -221,21 +141,35 @@ export function NetworkLeaderDashboard() {
     );
   }
 
+  const userRedes = redes || [];
+  const currentReports = redeData?.reports || [];
+  const reportsByCoordenacao = redeData?.byCoordenacao || {};
+
+  const statCards = [
+    { icon: Users, label: 'Membros Presentes', value: redeData?.totals.members_present || 0 },
+    { icon: UserCheck, label: 'Líderes em Treino', value: redeData?.totals.leaders_in_training || 0 },
+    { icon: Heart, label: 'Discipulados', value: redeData?.totals.discipleships || 0 },
+    { icon: UserPlus, label: 'Visitantes', value: redeData?.totals.visitors || 0 },
+    { icon: Baby, label: 'Crianças', value: redeData?.totals.children || 0 },
+    { icon: FileSpreadsheet, label: 'Total de Células', value: redeData?.reports.length || 0 },
+  ];
+
+  const selectedRedeData = userRedes.find(r => r.id === selectedRede);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Dashboard do Líder de Rede</h2>
-          <p className="text-sm text-muted-foreground">
-            Período: {formatDateRangeDisplay()}
+          <h2 className="text-2xl font-bold text-foreground">Gestão da Rede</h2>
+          <p className="text-muted-foreground">
+            Acompanhe o desempenho das coordenações
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {selectedRede && currentReports.length > 0 && (
-            <Button onClick={handleExportExcel} variant="outline">
-              <FileSpreadsheet className="h-4 w-4 mr-2" />
-              Exportar Excel
+          {selectedRede && (
+            <Button variant="outline" size="icon" onClick={handleExportExcel} title="Exportar para Excel">
+              <FileSpreadsheet className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -243,8 +177,8 @@ export function NetworkLeaderDashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Selecione sua Rede</CardTitle>
-          <CardDescription>Visualize os dados consolidados de todas as coordenações</CardDescription>
+          <CardTitle>Selecione a Rede</CardTitle>
+          <CardDescription>Escolha a rede para visualizar os relatórios</CardDescription>
         </CardHeader>
         <CardContent>
           <Select value={selectedRede} onValueChange={setSelectedRede}>
@@ -316,11 +250,19 @@ export function NetworkLeaderDashboard() {
             ))}
           </div>
 
-          <Tabs defaultValue="overview" className="space-y-4">
+          <Tabs defaultValue="coordenacoes" className="space-y-4">
             <TabsList className="flex flex-wrap h-auto gap-1">
-              <TabsTrigger value="overview" className="flex items-center gap-2">
+              <TabsTrigger value="coordenacoes" className="flex items-center gap-2">
                 <Network className="h-4 w-4" />
-                Visão Geral
+                Coordenações
+              </TabsTrigger>
+              <TabsTrigger value="multiplicacoes" className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Multiplicação (Antiga)
+              </TabsTrigger>
+              <TabsTrigger value="multiplicacoes-visual" className="flex items-center gap-2">
+                <GitBranch className="h-4 w-4" />
+                Multiplicação (Nova)
               </TabsTrigger>
               <TabsTrigger value="historico" className="flex items-center gap-2">
                 <History className="h-4 w-4" />
@@ -329,10 +271,6 @@ export function NetworkLeaderDashboard() {
               <TabsTrigger value="insights" className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 Insights IA
-              </TabsTrigger>
-              <TabsTrigger value="multiplicacao" className="flex items-center gap-2">
-                <GitBranch className="h-4 w-4" />
-                Multiplicação
               </TabsTrigger>
               <TabsTrigger value="fotos" className="flex items-center gap-2">
                 <Image className="h-4 w-4" />
@@ -346,6 +284,14 @@ export function NetworkLeaderDashboard() {
               )}
             </TabsList>
 
+            <TabsContent value="multiplicacoes">
+              <MultiplicacoesTab />
+            </TabsContent>
+
+            <TabsContent value="multiplicacoes-visual">
+              <MultiplicacoesVisual celulas={celulas || []} />
+            </TabsContent>
+
             <TabsContent value="insights">
               <AIInsightsPanel 
                 reports={currentReports} 
@@ -354,122 +300,137 @@ export function NetworkLeaderDashboard() {
               />
             </TabsContent>
 
-            <TabsContent value="multiplicacao">
-              <MultiplicacoesTab />
-            </TabsContent>
-
-            <TabsContent value="overview">
-              <div className="space-y-4">
-                {Object.values(reportsByCoordenacao).map((coordData) => (
-                  <Card key={coordData.name}>
-                    <Collapsible>
-                      <CollapsibleTrigger asChild>
-                        <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => toggleCoord(coordData.name)}>
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <CardTitle>{coordData.name}</CardTitle>
-                              <CardDescription className="mt-1">
-                                {coordData.reports.length} células com relatório
-                              </CardDescription>
-                            </div>
-                            {expandedCoords.has(coordData.name) ? (
-                              <ChevronUp className="h-5 w-5 text-muted-foreground" />
-                            ) : (
-                              <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                            )}
-                          </div>
-                        </CardHeader>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <CardContent>
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Célula</TableHead>
-                                <TableHead className="text-center">Membros</TableHead>
-                                <TableHead className="text-center">Líderes Trein.</TableHead>
-                                <TableHead className="text-center">Discipulados</TableHead>
-                                <TableHead className="text-center">Visitantes</TableHead>
-                                <TableHead className="text-center">Crianças</TableHead>
-                                <TableHead className="text-right">Ações</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {coordData.reports.map((report) => (
-                                <TableRow key={report.id}>
-                                  <TableCell className="font-medium">
-                                    <Button 
-                                      variant="link" 
-                                      className="p-0 h-auto font-medium"
-                                      onClick={() => setSelectedCelula({ id: report.celula_id, name: report.celula?.name || 'Célula' })}
-                                    >
-                                      {report.celula?.name}
-                                    </Button>
-                                  </TableCell>
-                                  <TableCell className="text-center">{report.members_present}</TableCell>
-                                  <TableCell className="text-center">{report.leaders_in_training}</TableCell>
-                                  <TableCell className="text-center">{report.discipleships}</TableCell>
-                                  <TableCell className="text-center">{report.visitors}</TableCell>
-                                  <TableCell className="text-center">{report.children}</TableCell>
-                                  <TableCell className="text-right">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setSelectedCelula({ id: report.celula_id, name: report.celula?.name || 'Célula' })}
-                                    >
-                                      <Eye className="h-4 w-4" />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                              {/* Subtotal row */}
-                              <TableRow className="bg-muted/50 font-medium">
-                                <TableCell>Total</TableCell>
-                                <TableCell className="text-center">{coordData.totals.members_present}</TableCell>
-                                <TableCell className="text-center">{coordData.totals.leaders_in_training}</TableCell>
-                                <TableCell className="text-center">{coordData.totals.discipleships}</TableCell>
-                                <TableCell className="text-center">{coordData.totals.visitors}</TableCell>
-                                <TableCell className="text-center">{coordData.totals.children}</TableCell>
-                                <TableCell></TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        </CardContent>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </Card>
-                ))}
-              </div>
+            <TabsContent value="coordenacoes">
+              {/* Coordenações Table */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Network className="h-5 w-5" />
+                    Dados por Coordenação
+                  </CardTitle>
+                  <CardDescription>
+                    {Object.keys(reportsByCoordenacao).length} coordenação(ões) com relatórios nesta semana
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {reportsLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  ) : Object.keys(reportsByCoordenacao).length > 0 ? (
+                    <div className="space-y-4">
+                      {Object.entries(reportsByCoordenacao).map(([coordId, coord]) => {
+                        const total = coord.totals.members_present + coord.totals.leaders_in_training + 
+                          coord.totals.discipleships + coord.totals.visitors + coord.totals.children;
+                        const isExpanded = expandedCoords.has(coordId);
+                        
+                        return (
+                          <Collapsible key={coordId} open={isExpanded} onOpenChange={() => toggleCoord(coordId)}>
+                            <Card>
+                              <CollapsibleTrigger asChild>
+                                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <CardTitle className="text-base">{coord.name}</CardTitle>
+                                      <CardDescription>
+                                        {coord.reports.length} célula(s) • Total: {total}
+                                      </CardDescription>
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                      <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+                                        <span>Membros: {coord.totals.members_present}</span>
+                                        <span>•</span>
+                                        <span>Visitantes: {coord.totals.visitors}</span>
+                                      </div>
+                                      {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <CardContent className="pt-0">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow>
+                                        <TableHead>Célula</TableHead>
+                                        <TableHead className="text-center">Membros</TableHead>
+                                        <TableHead className="text-center">Líderes</TableHead>
+                                        <TableHead className="text-center">Disc.</TableHead>
+                                        <TableHead className="text-center">Vis.</TableHead>
+                                        <TableHead className="text-center">Crianças</TableHead>
+                                        <TableHead className="text-center">Ações</TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                      {coord.reports.map(report => (
+                                        <TableRow key={report.id}>
+                                          <TableCell className="font-medium">{report.celula?.name}</TableCell>
+                                          <TableCell className="text-center">{report.members_present}</TableCell>
+                                          <TableCell className="text-center">{report.leaders_in_training}</TableCell>
+                                          <TableCell className="text-center">{report.discipleships}</TableCell>
+                                          <TableCell className="text-center">{report.visitors}</TableCell>
+                                          <TableCell className="text-center">{report.children}</TableCell>
+                                          <TableCell className="text-center">
+                                            <Button 
+                                              variant="ghost" 
+                                              size="sm"
+                                              onClick={() => {
+                                                setSelectedCelula({ id: report.celula_id, name: report.celula?.name || '' });
+                                              }}
+                                            >
+                                              <Eye className="h-4 w-4" />
+                                            </Button>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </CardContent>
+                              </CollapsibleContent>
+                            </Card>
+                          </Collapsible>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Nenhum relatório encontrado para esta semana.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </TabsContent>
 
             <TabsContent value="historico">
               <ReportsHistoryTable 
-                reports={currentReports}
+                reports={currentReports} 
+                isLoading={reportsLoading}
                 onEdit={handleEditReport}
                 onDelete={handleDeleteReport}
               />
             </TabsContent>
 
             <TabsContent value="fotos">
-              <CelulaPhotoGallery reports={currentReports} />
+              <CelulaPhotoGallery redeId={selectedRede} />
             </TabsContent>
-
-            <TabsContent value="supervisoes">
-              <SupervisoesList supervisoes={supervisoes || []} />
-            </TabsContent>
+            
+            {supervisoes && supervisoes.length > 0 && (
+              <TabsContent value="supervisoes">
+                <SupervisoesList supervisoes={supervisoes} />
+              </TabsContent>
+            )}
           </Tabs>
         </>
       )}
 
       {selectedCelula && (
         <CelulaDetailsDialog
-          open={!!selectedCelula}
-          onOpenChange={(open) => !open && setSelectedCelula(null)}
           celulaId={selectedCelula.id}
           celulaName={selectedCelula.name}
+          isOpen={!!selectedCelula}
+          onClose={() => setSelectedCelula(null)}
         />
       )}
     </div>
   );
-}
-          
+}      
