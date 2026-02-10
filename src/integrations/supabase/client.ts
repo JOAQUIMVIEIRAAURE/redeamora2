@@ -1,15 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// URL DO SEU PROJETO (Extraída do código que você encontrou)
-const SUPABASE_URL = 'https://ecnowtbiighmxgzgpmus.supabase.co';
+// Usar variáveis de ambiente para URL e Chave
+// Isso permite que o Lovable (e o Vite) injetem os valores corretos automaticamente
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// SUA CHAVE DE API (Extraída do código que você encontrou)
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVjbm93dGJpaWdobXhnemdwbXVzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NzU1MjcsImV4cCI6MjA4NjE1MTUyN30.na-g_3mKDbRe7q_JvLCVvFTn702uBEUx-4U0S-ghgDY';
-
-// Verificação de segurança
+// Verificação de segurança (apenas para debug)
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('❌ ERRO CRÍTICO: Chave do Supabase não configurada!');
+  console.error('❌ ERRO: Variáveis de ambiente do Supabase não encontradas! Verifique se o projeto está conectado corretamente.');
 }
 
 export const supabase = createClient<Database>(
@@ -23,3 +22,4 @@ export const supabase = createClient<Database>(
     }
   }
 );
+
