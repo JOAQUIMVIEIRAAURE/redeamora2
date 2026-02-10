@@ -1,327 +1,391 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { Users, UserCheck, Heart, UserPlus, Baby, Save, Loader2, ClipboardList, Users2, CalendarIcon, Image, History } from 'lucide-react';
-import { useCelulas } from '@/hooks/useCelulas';
-import { useWeeklyReports, useCreateWeeklyReport } from '@/hooks/useWeeklyReports';
-import { useToast } from '@/hooks/use-toast';
-import { DateRangeSelector, DateRangeValue, getDateString } from './DateRangeSelector';
-import { MembersList } from './cellleader/MembersList';
-import { CasaisManager } from './cellleader/CasaisManager';
-import { BirthdayAlert } from './BirthdayAlert';
-import { CelulaPhotoUpload } from './cellleader/CelulaPhotoUpload';
-import { CellLeaderPhotosTab } from './cellleader/CellLeaderPhotosTab';
-import { CellLeaderHistoryTab } from './cellleader/CellLeaderHistoryTab';
-import { format, subDays, startOfWeek } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Users, Users2, CheckCircle2, Circle, Link2, Loader2, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Member, useMembers, useUpdateMember, useRemoveMember } from '@/hooks/useMembers';
+import { useCasais, useDeleteCasal } from '@/hooks/useCasais';
+import { MemberFormDialogSimple } from './cellleader/MemberFormDialogSimple';
+import { CasalFormDialog } from './cellleader/CasalFormDialog';
 
-export function CellLeaderDashboard() {
-  const { toast } = useToast();
-  const { data: celulas, isLoading: celulasLoading } = useCelulas();
-  const createReport = useCreateWeeklyReport();
-  
-  const [selectedCelula, setSelectedCelula] = useState<string>('');
-  const [dateRange, setDateRange] = useState<DateRangeValue>({
-    from: subDays(new Date(), 6),
-    to: new Date()
-  });
-  const [meetingDate, setMeetingDate] = useState<Date>(new Date());
-  
-  const dateRangeFilter = {
-    from: getDateString(dateRange.from),
-    to: getDateString(dateRange.to)
-  };
-  
-  const { data: existingReports, isLoading: reportsLoading } = useWeeklyReports(selectedCelula, dateRangeFilter);
-  
-  const [formData, setFormData] = useState({
-    members_present: 0,
-    leaders_in_training: 0,
-    discipleships: 0,
-    visitors: 0,
-    children: 0,
-    notes: '',
-    photo_url: null as string | null,
-  });
+interface CelulaDetailsDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  celulaId: string;
+  celulaName: string;
+}
 
-  // Get week start from meeting date for database compatibility
-  const weekStart = getDateString(startOfWeek(meetingDate, { weekStartsOn: 1 }));
-  const meetingDateString = getDateString(meetingDate);
+const MARCOS_ESPIRITUAIS = [
+  { key: 'batismo', label: 'Batismo' },
+  { key: 'encontro_com_deus', label: 'Encontro com Deus' },
+  { key: 'renovo', label: 'Renovo' },
+  { key: 'encontro_de_casais', label: 'Encontro de Casais' },
+  { key: 'curso_lidere', label: 'Curso Lidere' },
+  { key: 'is_discipulado', label: 'É Discipulado' },
+  { key: 'is_lider_em_treinamento', label: 'Líder em Treinamento' },
+] as const;
 
-  // Update form when celula or meeting date changes
-  useEffect(() => {
-    if (selectedCelula && existingReports) {
-      const report = existingReports.find(r => 
-        r.celula_id === selectedCelula && 
-        (r.meeting_date === meetingDateString || r.week_start === weekStart)
-      );
-      if (report) {
-        setFormData({
-          members_present: report.members_present,
-          leaders_in_training: report.leaders_in_training,
-          discipleships: report.discipleships,
-          visitors: report.visitors,
-          children: report.children,
-          notes: report.notes || '',
-          photo_url: report.photo_url || null,
-        });
-        if (report.meeting_date) {
-          setMeetingDate(new Date(report.meeting_date));
-        }
+export function CelulaDetailsDialog({ open, onOpenChange, celulaId, celulaName }: CelulaDetailsDialogProps) {
+  const { data: members, isLoading: membersLoading } = useMembers(celulaId);
+  const { data: casais, isLoading: casaisLoading } = useCasais(celulaId);
+  const updateMember = useUpdateMember();
+  const removeMember = useRemoveMember();
+  const deleteCasal = useDeleteCasal();
+ 
+  const [memberDialogOpen, setMemberDialogOpen] = useState(false);
+  const [casalDialogOpen, setCasalDialogOpen] = useState(false);
+  const [expandedMembers, setExpandedMembers] = useState<Set<string>>(new Set());
+
+  const isLoading = membersLoading || casaisLoading;
+
+  const toggleExpanded = (memberId: string) => {
+    setExpandedMembers(prev => {
+      const next = new Set(prev);
+      if (next.has(memberId)) {
+        next.delete(memberId);
       } else {
-        setFormData({
-          members_present: 0,
-          leaders_in_training: 0,
-          discipleships: 0,
-          visitors: 0,
-          children: 0,
-          notes: '',
-          photo_url: null,
-        });
+        next.add(memberId);
       }
-    }
-  }, [selectedCelula, meetingDateString, weekStart, existingReports]);
-
-  const handleCelulaChange = (celulaId: string) => {
-    setSelectedCelula(celulaId);
+      return next;
+    });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedCelula) {
-      toast({
-        title: 'Erro',
-        description: 'Selecione uma célula',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const handleMarcoChange = async (member: Member, marco: string, checked: boolean) => {
+    await updateMember.mutateAsync({
+      id: member.id,
+      [marco]: checked,
+    });
+  };
 
-    try {
-      await createReport.mutateAsync({
-        celula_id: selectedCelula,
-        week_start: weekStart,
-        meeting_date: meetingDateString,
-        ...formData,
-      });
-      
-      toast({
-        title: 'Sucesso!',
-        description: 'Relatório semanal salvo com sucesso',
-      });
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Erro ao salvar relatório',
-        variant: 'destructive',
-      });
+  const handleRemoveMember = async (memberId: string) => {
+    if (confirm('Tem certeza que deseja remover este membro?')) {
+      await removeMember.mutateAsync(memberId);
     }
   };
 
-  // Show all celulas in controlled environment
-  const userCelulas = celulas || [];
+  const handleRemoveCasal = async (casalId: string) => {
+    if (confirm('Tem certeza que deseja remover este vínculo de casal?')) {
+      await deleteCasal.mutateAsync(casalId);
+    }
+  };
 
-  const statCards = [
-    { icon: Users, label: 'Membros Presentes', key: 'members_present', color: 'text-primary' },
-    { icon: UserCheck, label: 'Líderes em Treinamento', key: 'leaders_in_training', color: 'text-primary' },
-    { icon: Heart, label: 'Discipulados', key: 'discipleships', color: 'text-primary' },
-    { icon: UserPlus, label: 'Visitantes', key: 'visitors', color: 'text-primary' },
-    { icon: Baby, label: 'Crianças', key: 'children', color: 'text-primary' },
-  ];
+  const getMarcoCount = (member: Member) => {
+    let count = 0;
+    if (member.batismo) count++;
+    if (member.encontro_com_deus) count++;
+    if (member.renovo) count++;
+    if (member.encontro_de_casais) count++;
+    if (member.curso_lidere) count++;
+    if (member.is_discipulado) count++;
+    if (member.is_lider_em_treinamento) count++;
+    return count;
+  };
 
-  if (celulasLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  // Get members that are already in a couple
+  const membersInCouples = new Set<string>();
+  casais?.forEach(casal => {
+    membersInCouples.add(casal.member1_id);
+    membersInCouples.add(casal.member2_id);
+  });
+
+  // Filter available members for couples
+  const availableMembers = members?.filter(m => !membersInCouples.has(m.id)) || [];
+
+  // Calculate statistics
+  const membrosStats = {
+    total: members?.length || 0,
+    batismo: members?.filter(m => m.batismo).length || 0,
+    encontro_com_deus: members?.filter(m => m.encontro_com_deus).length || 0,
+    renovo: members?.filter(m => m.renovo).length || 0,
+    encontro_de_casais: members?.filter(m => m.encontro_de_casais).length || 0,
+    curso_lidere: members?.filter(m => m.curso_lidere).length || 0,
+    is_discipulado: members?.filter(m => m.is_discipulado).length || 0,
+    is_lider_em_treinamento: members?.filter(m => m.is_lider_em_treinamento).length || 0,
+  };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Gestão da Célula</h2>
-        </div>
-      </div>
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              {celulaName}
+            </DialogTitle>
+            <DialogDescription>
+              Gerencie os membros e casais da célula
+            </DialogDescription>
+          </DialogHeader>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Selecione sua Célula</CardTitle>
-          <CardDescription>Escolha a célula para gerenciar</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedCelula} onValueChange={handleCelulaChange}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Selecione uma célula" />
-            </SelectTrigger>
-            <SelectContent>
-              {userCelulas.map(celula => (
-                <SelectItem key={celula.id} value={celula.id}>
-                  {celula.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card>
-
-      {selectedCelula ? (
-        <Tabs defaultValue="relatorio" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="relatorio" className="flex items-center gap-2">
-              <ClipboardList className="h-4 w-4" />
-              <span className="hidden sm:inline">Relatório</span>
-            </TabsTrigger>
-            <TabsTrigger value="historico" className="flex items-center gap-2">
-              <History className="h-4 w-4" />
-              <span className="hidden sm:inline">Histórico</span>
-            </TabsTrigger>
-            <TabsTrigger value="membros" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span className="hidden sm:inline">Membros</span>
-            </TabsTrigger>
-            <TabsTrigger value="casais" className="flex items-center gap-2">
-              <Users2 className="h-4 w-4" />
-              <span className="hidden sm:inline">Casais</span>
-            </TabsTrigger>
-            <TabsTrigger value="fotos" className="flex items-center gap-2">
-              <Image className="h-4 w-4" />
-              <span className="hidden sm:inline">Fotos</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="relatorio" className="space-y-4">
-            {/* Birthday Alert */}
-            <BirthdayAlert celulaId={selectedCelula} />
-            
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              {/* Meeting Date Picker */}
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground">Data da Célula:</span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-[200px] justify-start text-left font-normal"
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {format(meetingDate, "dd/MM/yyyy", { locale: ptBR })}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={meetingDate}
-                      onSelect={(date) => date && setMeetingDate(date)}
-                      disabled={(date) => date > new Date()}
-                      initialFocus
-                      locale={ptBR}
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              
-              {/* Date Range Filter for history */}
-              <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-                {statCards.map(({ icon: Icon, label, key, color }) => (
-                  <Card key={key}>
-                    <CardHeader className="flex flex-row items-center justify-between pb-2">
-                      <CardTitle className="text-sm font-medium text-muted-foreground">
-                        {label}
-                      </CardTitle>
-                      <Icon className={`h-4 w-4 ${color}`} />
+          ) : (
+            <Tabs defaultValue="resumo" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="resumo">Resumo</TabsTrigger>
+                <TabsTrigger value="membros">Membros ({members?.length || 0})</TabsTrigger>
+                <TabsTrigger value="casais">Casais ({casais?.length || 0})</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="resumo" className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Membros</CardTitle>
+                      <CardDescription>Total de membros ativos</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Input
-                        type="number"
-                        min="0"
-                        value={formData[key as keyof typeof formData]}
-                        onChange={(e) => setFormData(prev => ({
-                          ...prev,
-                          [key]: parseInt(e.target.value) || 0
-                        }))}
-                        className="text-2xl font-bold h-12"
-                      />
+                      <div className="text-3xl font-bold">{membrosStats.total}</div>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-sm">Casais</CardTitle>
+                      <CardDescription>Casais vinculados</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{casais?.length || 0}</div>
+                    </CardContent>
+                  </Card>
+                </div>
 
-              <Card className="mt-4">
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium">Observações e Foto</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Textarea
-                    placeholder="Adicione observações sobre a reunião..."
-                    value={formData.notes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                    rows={3}
-                  />
-                  
-                  <CelulaPhotoUpload
-                    photoUrl={formData.photo_url}
-                    onPhotoChange={(url) => setFormData(prev => ({ ...prev, photo_url: url }))}
-                    celulaId={selectedCelula}
-                    weekStart={weekStart}
-                  />
-                  
-                  <Button type="submit" className="w-full" disabled={createReport.isPending}>
-                    {createReport.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    Salvar Relatório
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Marcos Espirituais</CardTitle>
+                    <CardDescription>Progresso dos membros</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {MARCOS_ESPIRITUAIS.map(({ key, label }) => {
+                        const count = membrosStats[key as keyof typeof membrosStats];
+                        const percentage = membrosStats.total > 0
+                          ? Math.round((count / membrosStats.total) * 100)
+                          : 0;
+                        return (
+                          <div key={key} className="flex items-center justify-between">
+                            <span className="text-sm">{label}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-primary rounded-full transition-all"
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                              <Badge variant="secondary" className="min-w-[60px] justify-center">
+                                {count}/{membrosStats.total}
+                              </Badge>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="membros" className="space-y-4">
+                <div className="flex justify-end">
+                  <Button onClick={() => setMemberDialogOpen(true)} size="sm">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Membro
                   </Button>
-                </CardContent>
-              </Card>
-            </form>
-          </TabsContent>
+                </div>
+               
+                <ScrollArea className="h-[350px] pr-4">
+                  <div className="space-y-3">
+                    {members?.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        Nenhum membro cadastrado. Clique em "Adicionar Membro" para começar.
+                      </div>
+                    ) : (
+                      members?.map((member) => (
+                        <Collapsible
+                          key={member.id}
+                          open={expandedMembers.has(member.id)}
+                          onOpenChange={() => toggleExpanded(member.id)}
+                        >
+                          <div className="border rounded-lg p-3">
+                            <CollapsibleTrigger asChild>
+                              <div className="flex items-center justify-between cursor-pointer hover:bg-muted/50 rounded-md p-2 -m-2">
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage src={member.profile?.avatar_url || undefined} />
+                                    <AvatarFallback>
+                                      {member.profile?.name?.charAt(0) || 'M'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-medium">{member.profile?.name || 'Sem nome'}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                      {member.profile?.email || 'Sem email'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary">
+                                    {getMarcoCount(member)}/7 marcos
+                                  </Badge>
+                                  {expandedMembers.has(member.id) ? (
+                                    <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                                  )}
+                                </div>
+                              </div>
+                            </CollapsibleTrigger>
+                           
+                            <CollapsibleContent className="pt-4">
+                              <div className="space-y-3">
+                                <p className="text-sm font-medium text-muted-foreground">Marcos Espirituais:</p>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                  {MARCOS_ESPIRITUAIS.map(({ key, label }) => (
+                                    <div key={key} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`${member.id}-${key}`}
+                                        checked={member[key as keyof Member] as boolean}
+                                        onCheckedChange={(checked) =>
+                                          handleMarcoChange(member, key, checked as boolean)
+                                        }
+                                        disabled={updateMember.isPending}
+                                      />
+                                      <label
+                                        htmlFor={`${member.id}-${key}`}
+                                        className="text-sm cursor-pointer"
+                                      >
+                                        {label}
+                                      </label>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="flex justify-end pt-2">
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleRemoveMember(member.id)}
+                                    disabled={removeMember.isPending}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Remover
+                                  </Button>
+                                </div>
+                              </div>
+                            </CollapsibleContent>
+                          </div>
+                        </Collapsible>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
 
-          <TabsContent value="historico">
-            <CellLeaderHistoryTab reports={existingReports || []} isLoading={reportsLoading} />
-          </TabsContent>
+              <TabsContent value="casais" className="space-y-4">
+                <div className="flex justify-end">
+                  <Button
+                    onClick={() => setCasalDialogOpen(true)}
+                    size="sm"
+                    disabled={availableMembers.length < 2}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Vincular Casal
+                  </Button>
+                </div>
+               
+                <ScrollArea className="h-[350px] pr-4">
+                  <div className="space-y-3">
+                    {casais?.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Users2 className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+                        <p>Nenhum casal vinculado ainda.</p>
+                        {availableMembers.length >= 2 ? (
+                          <p className="text-sm">Clique em "Vincular Casal" para começar.</p>
+                        ) : (
+                          <p className="text-sm">Adicione pelo menos 2 membros para vincular casais.</p>
+                        )}
+                      </div>
+                    ) : (
+                      casais?.map((casal) => (
+                        <Card key={casal.id} className="bg-gradient-to-r from-primary/5 to-primary/10">
+                          <CardContent className="py-4">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex items-center gap-4">
+                                {/* Couple Photo */}
+                                <Avatar className="h-12 w-12">
+                                  <AvatarImage src={casal.photo_url || undefined} />
+                                  <AvatarFallback>
+                                    <Users2 className="h-5 w-5 text-muted-foreground" />
+                                  </AvatarFallback>
+                                </Avatar>
 
-          <TabsContent value="membros">
-            <MembersList celulaId={selectedCelula} />
-          </TabsContent>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage src={casal.member1?.profile?.avatar_url || undefined} />
+                                    <AvatarFallback>
+                                      {casal.member1?.profile?.name?.charAt(0) || 'M'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium">
+                                    {casal.member1?.profile?.name || 'Sem nome'}
+                                  </span>
+                                </div>
 
-          <TabsContent value="casais">
-            <CasaisManager celulaId={selectedCelula} />
-          </TabsContent>
+                                <Link2 className="h-5 w-5 text-primary flex-shrink-0" />
 
-          <TabsContent value="fotos">
-            <CellLeaderPhotosTab reports={existingReports || []} isLoading={reportsLoading} />
-          </TabsContent>
-        </Tabs>
-      ) : (
-        <Card className="border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <Users className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium">Selecione uma célula</h3>
-            <p className="text-muted-foreground mt-1">
-              Escolha sua célula acima para gerenciar membros, casais e relatórios
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-10 w-10">
+                                    <AvatarImage src={casal.member2?.profile?.avatar_url || undefined} />
+                                    <AvatarFallback>
+                                      {casal.member2?.profile?.name?.charAt(0) || 'M'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="font-medium">
+                                    {casal.member2?.profile?.name || 'Sem nome'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRemoveCasal(casal.id)}
+                                disabled={deleteCasal.isPending}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <MemberFormDialogSimple
+        open={memberDialogOpen}
+        onOpenChange={setMemberDialogOpen}
+        celulaId={celulaId}
+      />
+
+      <CasalFormDialog
+        open={casalDialogOpen}
+        onOpenChange={setCasalDialogOpen}
+        celulaId={celulaId}
+        availableMembers={availableMembers}
+      />
+    </>
   );
 }
+           
