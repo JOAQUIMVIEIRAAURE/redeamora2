@@ -99,14 +99,16 @@ export function MultiplicacoesTab() {
                 <Label>Célula de Origem (Matriz)</Label>
                 <Select
                   value={formData.celula_origem_id}
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, celula_origem_id: v }))}
+                  onValueChange={(value) => setFormData({ ...formData, celula_origem_id: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a célula matriz" />
+                    <SelectValue placeholder="Selecione a célula mãe" />
                   </SelectTrigger>
                   <SelectContent>
-                    {celulas.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    {celulas.map((celula) => (
+                      <SelectItem key={celula.id} value={celula.id}>
+                        {celula.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -116,17 +118,17 @@ export function MultiplicacoesTab() {
                 <Label>Célula Multiplicada (Nova)</Label>
                 <Select
                   value={formData.celula_destino_id}
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, celula_destino_id: v }))}
+                  onValueChange={(value) => setFormData({ ...formData, celula_destino_id: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a célula que nasceu" />
+                    <SelectValue placeholder="Selecione a nova célula" />
                   </SelectTrigger>
                   <SelectContent>
-                    {celulasDisponiveis
-                      .filter(c => c.id !== formData.celula_origem_id)
-                      .map((c) => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
+                    {celulasDisponiveis.map((celula) => (
+                      <SelectItem key={celula.id} value={celula.id}>
+                        {celula.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -136,24 +138,23 @@ export function MultiplicacoesTab() {
                 <Input
                   type="date"
                   value={formData.data_multiplicacao}
-                  onChange={(e) => setFormData(prev => ({ ...prev, data_multiplicacao: e.target.value }))}
-                  required
+                  onChange={(e) => setFormData({ ...formData, data_multiplicacao: e.target.value })}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>Observações (opcional)</Label>
+                <Label>Observações (Opcional)</Label>
                 <Textarea
                   value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Detalhes sobre a multiplicação..."
                 />
               </div>
 
               <DialogFooter>
                 <Button type="submit" disabled={createMutation.isPending}>
-                  {createMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                  Salvar
+                  {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Registrar
                 </Button>
               </DialogFooter>
             </form>
@@ -161,106 +162,66 @@ export function MultiplicacoesTab() {
         </Dialog>
       </div>
 
-      {/* Tree View - Grouped by Origin */}
-      {Object.keys(origemGroups).length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {Object.values(origemGroups).map((group) => (
-            <Card key={group.origem?.id}>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full bg-primary" />
-                  {group.origem?.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 pl-4 border-l-2 border-muted">
-                  {group.filhas.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{m.celula_destino?.name}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {format(new Date(m.data_multiplicacao), 'MMM/yy', { locale: ptBR })}
-                        </Badge>
+      {/* Visualização de Árvore */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {Object.values(origemGroups).map((group: any) => (
+          <Card key={group.origem.id} className="relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Badge variant="outline" className="bg-primary/10">Matriz</Badge>
+                {group.origem.name}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground mb-2">
+                  Gerou {group.filhas.length} {group.filhas.length === 1 ? 'célula' : 'células'}:
+                </div>
+                {group.filhas.map((multiplicacao: any) => (
+                  <div key={multiplicacao.id} className="flex items-center gap-3 pl-4 border-l-2 border-muted">
+                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex-1">
+                      <div className="font-medium">{multiplicacao.celula_destino?.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(multiplicacao.data_multiplicacao), "dd/MM/yyyy", { locale: ptBR })}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-
-      {/* Table View */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Histórico de Multiplicações</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {multiplicacoes.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">
-              Nenhuma multiplicação registrada ainda.
-            </p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Célula Origem</TableHead>
-                  <TableHead></TableHead>
-                  <TableHead>Célula Multiplicada</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Observações</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {multiplicacoes.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className="font-medium">{m.celula_origem?.name}</TableCell>
-                    <TableCell>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    </TableCell>
-                    <TableCell>{m.celula_destino?.name}</TableCell>
-                    <TableCell>
-                      {format(new Date(m.data_multiplicacao), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
-                      {m.notes || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remover multiplicação?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Isso removerá o registro de origem da célula {m.celula_destino?.name}.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteMutation.mutate(m.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Remover
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </TableCell>
-                  </TableRow>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Excluir registro de multiplicação?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Isso removerá apenas o registro histórico. As células continuarão existindo.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => deleteMutation.mutate(multiplicacao.id)}>
+                            Confirmar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+        
+        {multiplicacoes.length === 0 && (
+          <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
+            <GitBranch className="h-12 w-12 mx-auto mb-4 opacity-20" />
+            <p>Nenhuma multiplicação registrada ainda.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
