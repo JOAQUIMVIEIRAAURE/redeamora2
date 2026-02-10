@@ -62,8 +62,8 @@ export function CasaisManager({ celulaId }: CasaisManagerProps) {
               {casais?.length || 0} casais vinculados
             </CardDescription>
           </div>
-          <Button 
-            onClick={() => setDialogOpen(true)} 
+          <Button
+            onClick={() => setDialogOpen(true)}
             size="sm"
             disabled={availableMembers.length < 2}
           >
@@ -84,8 +84,8 @@ export function CasaisManager({ celulaId }: CasaisManagerProps) {
             </div>
           ) : (
             casais?.map((casal) => (
-              <div 
-                key={casal.id} 
+              <div
+                key={casal.id}
                 className="border rounded-lg p-4 flex items-center justify-between bg-gradient-to-r from-primary/5 to-primary/10"
               >
                 <div className="flex items-center gap-4">
@@ -110,8 +110,7 @@ export function CasaisManager({ celulaId }: CasaisManagerProps) {
                     </span>
                   </div>
 
-                  {/* Link icon */}
-                  <Link2 className="h-4 w-4 text-primary" />
+                  <Link2 className="h-4 w-4 text-primary/50" />
 
                   {/* Member 2 */}
                   <div className="flex items-center gap-2">
@@ -131,7 +130,6 @@ export function CasaisManager({ celulaId }: CasaisManagerProps) {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleRemoveCasal(casal.id)}
-                  disabled={deleteCasal.isPending}
                   className="text-destructive hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
