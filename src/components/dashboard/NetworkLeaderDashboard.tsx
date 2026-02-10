@@ -451,7 +451,7 @@ export function NetworkLeaderDashboard() {
             </TabsContent>
 
             <TabsContent value="fotos">
-              <CelulaPhotoGallery redeId={selectedRede} />
+              <CelulaPhotoGallery reports={currentReports} />
             </TabsContent>
 
             <TabsContent value="supervisoes">
