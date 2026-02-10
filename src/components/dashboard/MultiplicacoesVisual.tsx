@@ -27,6 +27,7 @@ export function MultiplicacoesVisual({ celulas }: MultiplicacoesVisualProps) {
   const { data: multiplicacoes, isLoading } = useMultiplicacoes();
   const createMultiplicacao = useCreateMultiplicacao();
   const deleteMultiplicacao = useDeleteMultiplicacao();
+  const { toast } = useToast();
   
   const [selectedParent, setSelectedParent] = useState<string>('');
   const [selectedChild, setSelectedChild] = useState<string>('');
@@ -72,16 +73,34 @@ export function MultiplicacoesVisual({ celulas }: MultiplicacoesVisualProps) {
         data_multiplicacao: date
       });
       setSelectedChild('');
+      toast({
+        title: "Multiplicação adicionada",
+        description: "A relação foi criada com sucesso."
+      });
     } catch (error) {
       console.error(error);
+      toast({
+        title: "Erro ao adicionar",
+        description: "Não foi possível criar a multiplicação.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleDelete = async (multiplicacaoId: string) => {
     try {
       await deleteMultiplicacao.mutateAsync(multiplicacaoId);
+      toast({
+        title: "Multiplicação removida",
+        description: "A relação foi removida com sucesso."
+      });
     } catch (error) {
       console.error(error);
+      toast({
+        title: "Erro ao remover",
+        description: "Não foi possível remover a multiplicação.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -149,7 +168,7 @@ export function MultiplicacoesVisual({ celulas }: MultiplicacoesVisualProps) {
   // Células disponíveis para serem filhas (que ainda não são destino de ninguém)
   const availableChildren = celulas.filter(c => !treeData[c.id]);
   
-  // Células disponíveis para serem pais
+  // Células disponíveis para serem pais (qualquer célula, exceto ela mesma se fosse selecionada)
   const availableParents = celulas;
 
   if (isLoading) {
