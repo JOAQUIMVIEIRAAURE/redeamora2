@@ -58,7 +58,7 @@ export function CasalPhotoUpload({ casalId, currentPhotoUrl, onPhotoChange, isUp
         .getPublicUrl(fileName);
 
       onPhotoChange(urlData.publicUrl);
-      
+     
       toast({
         title: 'Foto enviada!',
         description: 'A foto do casal foi atualizada',
@@ -90,7 +90,7 @@ export function CasalPhotoUpload({ casalId, currentPhotoUrl, onPhotoChange, isUp
           <Camera className="h-5 w-5 text-muted-foreground" />
         </AvatarFallback>
       </Avatar>
-      
+     
       <div className="flex items-center gap-1">
         <Button
           type="button"
@@ -102,30 +102,18 @@ export function CasalPhotoUpload({ casalId, currentPhotoUrl, onPhotoChange, isUp
           {isUploading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <Camera className="h-4 w-4" />
+            <Camera className="h-4 w-4 mr-2" />
           )}
+          {currentPhotoUrl ? 'Alterar' : 'Adicionar Foto'}
         </Button>
-        
-        {currentPhotoUrl && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={handleRemovePhoto}
-            disabled={isUploading || isUpdating}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          accept="image/*"
+          onChange={handleFileSelect}
+        />
       </div>
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
-      />
     </div>
   );
 }
