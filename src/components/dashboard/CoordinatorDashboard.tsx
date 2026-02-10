@@ -373,7 +373,7 @@ export function CoordinatorDashboard() {
             </TabsContent>
 
             <TabsContent value="fotos">
-              <CelulaPhotoGallery coordenacaoId={selectedCoordenacao} />
+              <CelulaPhotoGallery reports={currentReports} />
             </TabsContent>
 
             <TabsContent value="supervisoes">
