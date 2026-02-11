@@ -303,6 +303,7 @@ export function CoordinatorDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Célula</TableHead>
+                      <TableHead>Líderes</TableHead>
                       <TableHead className="text-center">Membros</TableHead>
                       <TableHead className="text-center">Líderes Trein.</TableHead>
                       <TableHead className="text-center">Discipulados</TableHead>
@@ -341,6 +342,11 @@ export function CoordinatorDashboard() {
                             >
                               {celula.name}
                             </Button>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {celula.leadership_couple
+                              ? `${celula.leadership_couple.spouse1?.name} & ${celula.leadership_couple.spouse2?.name}`
+                              : '—'}
                           </TableCell>
                           <TableCell className="text-center">{cellTotals.members_present}</TableCell>
                           <TableCell className="text-center">{cellTotals.leaders_in_training}</TableCell>

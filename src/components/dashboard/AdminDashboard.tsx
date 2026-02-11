@@ -237,6 +237,7 @@ export function AdminDashboard() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Rede</TableHead>
+                      <TableHead>Líder de Rede</TableHead>
                       <TableHead className="text-center">Coord.</TableHead>
                       <TableHead className="text-center">Células</TableHead>
                       <TableHead className="text-center">Membros</TableHead>
@@ -254,6 +255,14 @@ export function AdminDashboard() {
                       return (
                         <TableRow key={redeId}>
                           <TableCell className="font-medium">{rede.name}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {(() => {
+                              const redeData = redes?.find(r => r.id === redeId);
+                              return redeData?.leadership_couple
+                                ? `${redeData.leadership_couple.spouse1?.name} & ${redeData.leadership_couple.spouse2?.name}`
+                                : '—';
+                            })()}
+                          </TableCell>
                           <TableCell className="text-center">
                             <Badge variant="outline">{rede.coordenacoes.length}</Badge>
                           </TableCell>
@@ -274,6 +283,7 @@ export function AdminDashboard() {
                     {/* Grand Total Row */}
                     <TableRow className="bg-muted/50 font-bold">
                       <TableCell>TOTAL GERAL</TableCell>
+                      <TableCell></TableCell>
                       <TableCell className="text-center">
                         <Badge variant="outline">{coordenacoes?.length || 0}</Badge>
                       </TableCell>

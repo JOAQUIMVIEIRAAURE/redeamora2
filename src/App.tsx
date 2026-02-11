@@ -14,6 +14,7 @@ import Presenca from "./pages/Presenca";
 import Redes from "./pages/Redes";
 import Coordenacoes from "./pages/Coordenacoes";
 import Configuracoes from "./pages/Configuracoes";
+import Dados from "./pages/Dados";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +35,7 @@ const App = () => (
             <Route path="/redes" element={<RoleProtectedRoute><Redes /></RoleProtectedRoute>} />
             <Route path="/coordenacoes" element={<RoleProtectedRoute><Coordenacoes /></RoleProtectedRoute>} />
             <Route path="/configuracoes" element={<RoleProtectedRoute><Configuracoes /></RoleProtectedRoute>} />
+            <Route path="/dados" element={<RoleProtectedRoute><Dados /></RoleProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </RoleProvider>
