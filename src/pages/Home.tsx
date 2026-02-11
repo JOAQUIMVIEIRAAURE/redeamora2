@@ -13,37 +13,37 @@ const roleOptions: Array<{
   description: string;
   icon: typeof HomeIcon;
 }> = [
-  {
-    role: 'celula_leader',
-    title: 'Líder de Célula',
-    description: 'Gerencie sua célula, registre presenças e envie relatórios semanais.',
-    icon: HomeIcon,
-  },
-  {
-    role: 'supervisor',
-    title: 'Supervisor',
-    description: 'Registre supervisões e acompanhe o desempenho das células.',
-    icon: ClipboardCheck,
-  },
-  {
-    role: 'coordenador',
-    title: 'Coordenador',
-    description: 'Visualize métricas da coordenação e gerencie líderes.',
-    icon: FolderTree,
-  },
-  {
-    role: 'rede_leader',
-    title: 'Líder de Rede',
-    description: 'Acompanhe métricas consolidadas por coordenação e exporte dados.',
-    icon: Network,
-  },
-  {
-    role: 'admin',
-    title: 'Administrador',
-    description: 'Acesso total: redes, coordenações, células, membros e usuários.',
-    icon: Shield,
-  },
-];
+{
+  role: 'celula_leader',
+  title: 'Líder de Célula',
+  description: 'Gerencie sua célula, registre presenças e envie relatórios semanais.',
+  icon: HomeIcon
+},
+{
+  role: 'supervisor',
+  title: 'Supervisor',
+  description: 'Registre supervisões e acompanhe o desempenho das células.',
+  icon: ClipboardCheck
+},
+{
+  role: 'coordenador',
+  title: 'Coordenador',
+  description: 'Visualize métricas da coordenação e gerencie líderes.',
+  icon: FolderTree
+},
+{
+  role: 'rede_leader',
+  title: 'Líder de Rede',
+  description: 'Acompanhe métricas consolidadas por coordenação e exporte dados.',
+  icon: Network
+},
+{
+  role: 'admin',
+  title: 'Administrador',
+  description: 'Acesso total: redes, coordenações, células, membros e usuários.',
+  icon: Shield
+}];
+
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -68,13 +68,13 @@ export default function HomePage() {
     }
   };
 
-  const selectedRoleTitle = selectedRoleForAccess 
-    ? roleOptions.find(r => r.role === selectedRoleForAccess)?.title || ''
-    : '';
+  const selectedRoleTitle = selectedRoleForAccess ?
+  roleOptions.find((r) => r.role === selectedRoleForAccess)?.title || '' :
+  '';
 
-  const selectedRoleCode = selectedRoleForAccess 
-    ? ACCESS_CODES[selectedRoleForAccess] || ''
-    : '';
+  const selectedRoleCode = selectedRoleForAccess ?
+  ACCESS_CODES[selectedRoleForAccess] || '' :
+  '';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-accent via-background to-secondary flex items-center justify-center p-4">
@@ -86,20 +86,20 @@ export default function HomePage() {
             </div>
           </div>
           <h1 className="text-4xl font-bold tracking-tight text-foreground">Igreja do Amor</h1>
-          <p className="text-muted-foreground mt-1 text-lg tracking-wide">Rede Amoradores</p>
+          <p className="text-muted-foreground mt-1 text-lg tracking-wide">Rede Amor a 2
+
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {roleOptions.map((option) => {
-            const IconComponent = option.icon;
-            const needsCode = requiresAccessCode(option.role);
-            
-            return (
-              <Card 
-                key={option.role} 
-                className="cursor-pointer card-hover group"
-                onClick={() => handleRoleSelect(option.role)}
-              >
+          {roleOptions.map((option) => {const IconComponent = option.icon;const needsCode = requiresAccessCode(option.role);
+
+              return (
+                <Card
+                  key={option.role}
+                  className="cursor-pointer card-hover group"
+                  onClick={() => handleRoleSelect(option.role)}>
+
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
@@ -107,9 +107,9 @@ export default function HomePage() {
                     </div>
                     <div className="flex items-center gap-2 flex-1">
                       <CardTitle className="text-lg">{option.title}</CardTitle>
-                      {needsCode && (
+                      {needsCode &&
                         <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-label="Requer código de acesso" />
-                      )}
+                        }
                     </div>
                   </div>
                 </CardHeader>
@@ -117,27 +117,27 @@ export default function HomePage() {
                   <CardDescription className="text-sm leading-relaxed">
                     {option.description}
                   </CardDescription>
-                  <Button 
-                    variant={needsCode ? "outline" : "default"}
-                    className="w-full mt-4"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRoleSelect(option.role);
-                    }}
-                  >
-                    {needsCode ? (
+                  <Button
+                      variant={needsCode ? "outline" : "default"}
+                      className="w-full mt-4"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRoleSelect(option.role);
+                      }}>
+
+                    {needsCode ?
                       <span className="flex items-center gap-2">
                         <Lock className="h-3.5 w-3.5" />
                         Acessar
-                      </span>
-                    ) : (
+                      </span> :
+
                       'Acessar'
-                    )}
+                      }
                   </Button>
                 </CardContent>
-              </Card>
-            );
-          })}
+              </Card>);
+
+            })}
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
@@ -150,8 +150,8 @@ export default function HomePage() {
         onOpenChange={setAccessDialogOpen}
         roleTitle={selectedRoleTitle}
         onSuccess={handleAccessSuccess}
-        accessCode={selectedRoleCode}
-      />
-    </div>
-  );
+        accessCode={selectedRoleCode} />
+
+    </div>);
+
 }
