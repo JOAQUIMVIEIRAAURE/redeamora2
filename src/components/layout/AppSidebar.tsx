@@ -8,7 +8,8 @@ import {
   ClipboardCheck,
   Settings,
   LogOut,
-  Database
+  Database,
+  Heart
 } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -30,15 +31,14 @@ const roleLabels: Record<string, string> = {
   admin: 'Administrador',
   rede_leader: 'Líder de Rede',
   coordenador: 'Coordenador',
+  supervisor: 'Supervisor',
   celula_leader: 'Líder de Célula',
 };
 
-// Items only for cell leader - just dashboard (no Dados)
 const cellLeaderNavItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
 ];
 
-// Nav items for coordinator and above (includes Dados)
 const fullNavItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Dados', href: '/dados', icon: Database },
@@ -60,7 +60,6 @@ export function AppSidebar() {
 
   const showAdminItems = isAdmin || isRedeLeader;
   
-  // Cell leader and supervisor only see Dashboard; coordinators and above see full menu
   const mainNavItems = (isCelulaLeader || isSupervisor) && !isCoordenador && !isRedeLeader && !isAdmin 
     ? cellLeaderNavItems 
     : fullNavItems;
@@ -72,29 +71,29 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="border-b border-sidebar-border p-4">
+      <SidebarHeader className="border-b border-sidebar-border/50 p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold">
-            ❤️
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-primary/15 backdrop-blur-sm">
+            <Heart className="h-5 w-5 text-sidebar-foreground fill-sidebar-foreground" />
           </div>
           <div className="flex flex-col">
-            <span className="font-semibold text-sidebar-foreground">Rede Amor a 2</span>
-            <span className="text-xs text-sidebar-foreground/70">Sistema de Células</span>
+            <span className="font-semibold text-sidebar-foreground text-sm">Igreja do Amor</span>
+            <span className="text-[11px] text-sidebar-foreground/60 tracking-wide">Rede Amoradores</span>
           </div>
         </div>
       </SidebarHeader>
       
-      <SidebarContent>
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/50 text-[10px] uppercase tracking-widest px-3">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={location.pathname === item.href}>
+                  <SidebarMenuButton asChild isActive={location.pathname === item.href} className="h-11 rounded-xl">
                     <NavLink to={item.href}>
                       <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <span className="font-medium">{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -105,15 +104,15 @@ export function AppSidebar() {
 
         {showAdminItems && (
           <SidebarGroup>
-            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground/50 text-[10px] uppercase tracking-widest px-3">Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {adminNavItems.map((item) => (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={location.pathname === item.href}>
+                    <SidebarMenuButton asChild isActive={location.pathname === item.href} className="h-11 rounded-xl">
                       <NavLink to={item.href}>
                         <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <span className="font-medium">{item.title}</span>
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -124,10 +123,10 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-4">
+      <SidebarFooter className="border-t border-sidebar-border/50 p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback>
+          <Avatar className="h-9 w-9 border-2 border-sidebar-foreground/20">
+            <AvatarFallback className="bg-sidebar-primary/15 text-sidebar-foreground text-xs font-semibold">
               {selectedRole?.charAt(0).toUpperCase() || 'U'}
             </AvatarFallback>
           </Avatar>
@@ -135,15 +134,12 @@ export function AppSidebar() {
             <span className="truncate text-sm font-medium text-sidebar-foreground">
               {selectedRole ? roleLabels[selectedRole] : 'Usuário'}
             </span>
-            <span className="truncate text-xs text-muted-foreground">
-              Ambiente controlado
-            </span>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLogout}
-            className="h-8 w-8 shrink-0"
+            className="h-9 w-9 shrink-0 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
             title="Voltar à seleção de papel"
           >
             <LogOut className="h-4 w-4" />

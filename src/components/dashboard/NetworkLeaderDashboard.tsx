@@ -26,6 +26,9 @@ import { ReportsHistoryTable } from '@/components/reports/ReportsHistoryTable';
 import { exportToExcel } from '@/utils/exportReports';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PageHeader } from '@/components/ui/page-header';
+import { StatCard } from '@/components/ui/stat-card';
+import { EmptyState } from '@/components/ui/empty-state';
 
 export function NetworkLeaderDashboard() {
   const { toast } = useToast();
@@ -34,111 +37,45 @@ export function NetworkLeaderDashboard() {
   const { data: celulas } = useCelulas();
   
   const [selectedRede, setSelectedRede] = useState<string>('');
-  const [dateRange, setDateRange] = useState<DateRangeValue>({
-    from: subDays(new Date(), 6),
-    to: new Date()
-  });
+  const [dateRange, setDateRange] = useState<DateRangeValue>({ from: subDays(new Date(), 6), to: new Date() });
   const [expandedCoords, setExpandedCoords] = useState<Set<string>>(new Set());
   const [selectedCelula, setSelectedCelula] = useState<{ id: string; name: string } | null>(null);
   
-  const dateRangeFilter = {
-    from: getDateString(dateRange.from),
-    to: getDateString(dateRange.to)
-  };
-  
+  const dateRangeFilter = { from: getDateString(dateRange.from), to: getDateString(dateRange.to) };
   const { data: redeData, isLoading: reportsLoading } = useWeeklyReportsByRede(selectedRede, dateRangeFilter);
   const { data: supervisoes } = useSupervisoesByRede(selectedRede);
-  
   const updateReport = useUpdateWeeklyReport();
   const deleteReport = useDeleteWeeklyReport();
 
-  const handleEditReport = (data: {
-    id: string;
-    members_present: number;
-    leaders_in_training: number;
-    discipleships: number;
-    visitors: number;
-    children: number;
-    notes: string | null;
-  }) => {
+  const handleEditReport = (data: { id: string; members_present: number; leaders_in_training: number; discipleships: number; visitors: number; children: number; notes: string | null; }) => {
     updateReport.mutate(data, {
-      onSuccess: () => {
-        toast({
-          title: 'Sucesso!',
-          description: 'Relatório atualizado com sucesso',
-        });
-      },
-      onError: () => {
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível atualizar o relatório',
-          variant: 'destructive',
-        });
-      },
+      onSuccess: () => toast({ title: 'Sucesso!', description: 'Relatório atualizado' }),
+      onError: () => toast({ title: 'Erro', description: 'Não foi possível atualizar', variant: 'destructive' }),
     });
   };
 
   const handleDeleteReport = (id: string) => {
     deleteReport.mutate(id, {
-      onSuccess: () => {
-        toast({
-          title: 'Sucesso!',
-          description: 'Relatório excluído com sucesso',
-        });
-      },
-      onError: () => {
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível excluir o relatório',
-          variant: 'destructive',
-        });
-      },
+      onSuccess: () => toast({ title: 'Sucesso!', description: 'Relatório excluído' }),
+      onError: () => toast({ title: 'Erro', description: 'Não foi possível excluir', variant: 'destructive' }),
     });
   };
 
   const toggleCoord = (coordId: string) => {
-    setExpandedCoords(prev => {
-      const next = new Set(prev);
-      if (next.has(coordId)) {
-        next.delete(coordId);
-      } else {
-        next.add(coordId);
-      }
-      return next;
-    });
+    setExpandedCoords(prev => { const next = new Set(prev); if (next.has(coordId)) next.delete(coordId); else next.add(coordId); return next; });
   };
 
-  const formatDateRangeDisplay = () => {
-    return `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
-  };
+  const formatDateRangeDisplay = () => `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
 
   const handleExportExcel = () => {
-    if (!redeData?.reports?.length || !celulas || !coordenacoes) {
-      toast({
-        title: 'Aviso',
-        description: 'Não há dados suficientes para exportar.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    if (!redeData?.reports?.length || !celulas || !coordenacoes) { toast({ title: 'Aviso', description: 'Não há dados suficientes.', variant: 'destructive' }); return; }
     const redeName = redes?.find(r => r.id === selectedRede)?.name || 'Rede';
-    const filename = `Relatorio_${redeName}_${getDateString(dateRange.from)}_${getDateString(dateRange.to)}`;
-
-    exportToExcel({ reports: redeData.reports, celulas, coordenacoes, periodLabel: filename });
-    
-    toast({
-      title: 'Sucesso',
-      description: 'Relatório exportado com sucesso!',
-    });
+    exportToExcel({ reports: redeData.reports, celulas, coordenacoes, periodLabel: `Relatorio_${redeName}_${getDateString(dateRange.from)}_${getDateString(dateRange.to)}` });
+    toast({ title: 'Sucesso', description: 'Relatório exportado!' });
   };
 
   if (redesLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
   const userRedes = redes || [];
@@ -146,115 +83,82 @@ export function NetworkLeaderDashboard() {
   const redeCelulas = redeData?.celulas || [];
   const redeCoordenacoes = redeData?.coordenacoes || [];
 
-  // Compute totals from reports
-  const totals = currentReports.reduce(
-    (acc, r) => ({
-      members_present: acc.members_present + r.members_present,
-      leaders_in_training: acc.leaders_in_training + r.leaders_in_training,
-      discipleships: acc.discipleships + r.discipleships,
-      visitors: acc.visitors + r.visitors,
-      children: acc.children + r.children,
-    }),
-    { members_present: 0, leaders_in_training: 0, discipleships: 0, visitors: 0, children: 0 }
-  );
+  const totals = currentReports.reduce((acc, r) => ({
+    members_present: acc.members_present + r.members_present,
+    leaders_in_training: acc.leaders_in_training + r.leaders_in_training,
+    discipleships: acc.discipleships + r.discipleships,
+    visitors: acc.visitors + r.visitors,
+    children: acc.children + r.children,
+  }), { members_present: 0, leaders_in_training: 0, discipleships: 0, visitors: 0, children: 0 });
 
-  // Group reports by coordenacao
   const reportsByCoordenacao: Record<string, { name: string; reports: WeeklyReport[]; totals: typeof totals }> = {};
   redeCoordenacoes.forEach(coord => {
     const coordCelulaIds = redeCelulas.filter(c => c.coordenacao_id === coord.id).map(c => c.id);
     const coordReports = currentReports.filter(r => coordCelulaIds.includes(r.celula_id));
-    const coordTotals = coordReports.reduce(
-      (acc, r) => ({
-        members_present: acc.members_present + r.members_present,
-        leaders_in_training: acc.leaders_in_training + r.leaders_in_training,
-        discipleships: acc.discipleships + r.discipleships,
-        visitors: acc.visitors + r.visitors,
-        children: acc.children + r.children,
-      }),
-      { members_present: 0, leaders_in_training: 0, discipleships: 0, visitors: 0, children: 0 }
-    );
+    const coordTotals = coordReports.reduce((acc, r) => ({
+      members_present: acc.members_present + r.members_present, leaders_in_training: acc.leaders_in_training + r.leaders_in_training,
+      discipleships: acc.discipleships + r.discipleships, visitors: acc.visitors + r.visitors, children: acc.children + r.children,
+    }), { members_present: 0, leaders_in_training: 0, discipleships: 0, visitors: 0, children: 0 });
     if (coordReports.length > 0) {
       reportsByCoordenacao[coord.id] = { name: coord.name, reports: coordReports, totals: coordTotals };
     }
   });
 
-  const statCards = [
-    { icon: Users, label: 'Membros Presentes', value: totals.members_present },
-    { icon: UserCheck, label: 'Líderes em Treino', value: totals.leaders_in_training },
-    { icon: Heart, label: 'Discipulados', value: totals.discipleships },
-    { icon: UserPlus, label: 'Visitantes', value: totals.visitors },
-    { icon: Baby, label: 'Crianças', value: totals.children },
-    { icon: FileSpreadsheet, label: 'Total de Células', value: currentReports.length },
-  ];
-
   const selectedRedeData = userRedes.find(r => r.id === selectedRede);
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground">Gestão da Rede</h2>
-          <p className="text-muted-foreground">
-            Acompanhe o desempenho das coordenações
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
-          {selectedRede && (
-            <Button variant="outline" size="icon" onClick={handleExportExcel} title="Exportar para Excel">
-              <FileSpreadsheet className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
+      <PageHeader
+        title="Gestão da Rede"
+        subtitle="Acompanhe o desempenho das coordenações"
+        icon={Network}
+        actions={
+          <div className="flex items-center gap-2">
+            <DateRangeSelector dateRange={dateRange} onDateRangeChange={setDateRange} />
+            {selectedRede && (
+              <Button variant="outline" size="icon" onClick={handleExportExcel} title="Exportar Excel">
+                <FileSpreadsheet className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        }
+      />
 
       <Card>
-        <CardHeader>
-          <CardTitle>Selecione a Rede</CardTitle>
-          <CardDescription>Escolha a rede para visualizar os relatórios</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedRede} onValueChange={setSelectedRede}>
-            <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Selecione uma rede" />
-            </SelectTrigger>
-            <SelectContent>
-              {userRedes.map((rede) => (
-                <SelectItem key={rede.id} value={rede.id}>
-                  {rede.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <CardContent className="p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <p className="text-sm font-medium text-muted-foreground whitespace-nowrap">Rede:</p>
+            <Select value={selectedRede} onValueChange={setSelectedRede}>
+              <SelectTrigger className="w-full sm:w-[300px]"><SelectValue placeholder="Selecione uma rede" /></SelectTrigger>
+              <SelectContent>
+                {userRedes.map((rede) => (<SelectItem key={rede.id} value={rede.id}>{rede.name}</SelectItem>))}
+              </SelectContent>
+            </Select>
+          </div>
         </CardContent>
       </Card>
 
       {selectedRedeData?.leadership_couple && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Liderança da Rede</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6">
-              <div className="flex -space-x-4">
+        <Card className="border-l-4 border-l-primary">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4">
+              <div className="flex -space-x-3">
                 {selectedRedeData.leadership_couple.spouse1 && (
-                  <Avatar className="h-16 w-16 border-4 border-background">
+                  <Avatar className="h-12 w-12 border-2 border-background">
                     <AvatarImage src={selectedRedeData.leadership_couple.spouse1.avatar_url || undefined} />
-                    <AvatarFallback>{selectedRedeData.leadership_couple.spouse1.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-accent text-accent-foreground text-sm">{selectedRedeData.leadership_couple.spouse1.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 )}
                 {selectedRedeData.leadership_couple.spouse2 && (
-                  <Avatar className="h-16 w-16 border-4 border-background">
+                  <Avatar className="h-12 w-12 border-2 border-background">
                     <AvatarImage src={selectedRedeData.leadership_couple.spouse2.avatar_url || undefined} />
-                    <AvatarFallback>{selectedRedeData.leadership_couple.spouse2.name?.charAt(0)}</AvatarFallback>
+                    <AvatarFallback className="bg-accent text-accent-foreground text-sm">{selectedRedeData.leadership_couple.spouse2.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                 )}
               </div>
               <div>
-                <p className="font-medium text-lg">
-                  {selectedRedeData.leadership_couple.spouse1?.name} & {selectedRedeData.leadership_couple.spouse2?.name}
-                </p>
-                <p className="text-muted-foreground">Líderes de Rede</p>
+                <p className="font-semibold">{selectedRedeData.leadership_couple.spouse1?.name} & {selectedRedeData.leadership_couple.spouse2?.name}</p>
+                <p className="text-xs text-muted-foreground">Líderes de Rede</p>
               </div>
             </div>
           </CardContent>
@@ -263,108 +167,57 @@ export function NetworkLeaderDashboard() {
 
       {selectedRede && (
         <>
-          {/* Birthday Alert for Cell Leaders */}
           <LeaderBirthdayAlert redeId={selectedRede} />
 
-          {/* Summary Cards */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
-            {statCards.map(({ icon: Icon, label, value }) => (
-              <Card key={label}>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    {label}
-                  </CardTitle>
-                  <Icon className="h-4 w-4 text-primary" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{value}</div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="grid gap-4 grid-cols-2 lg:grid-cols-3">
+            <StatCard icon={Users} label="Membros" value={totals.members_present} />
+            <StatCard icon={UserCheck} label="Líd. Treino" value={totals.leaders_in_training} />
+            <StatCard icon={Heart} label="Discipulados" value={totals.discipleships} />
+            <StatCard icon={UserPlus} label="Visitantes" value={totals.visitors} />
+            <StatCard icon={Baby} label="Crianças" value={totals.children} />
+            <StatCard icon={FileSpreadsheet} label="Células" value={currentReports.length} />
           </div>
 
           <Tabs defaultValue="coordenacoes" className="space-y-4">
             <TabsList className="flex flex-wrap h-auto gap-1">
-              <TabsTrigger value="coordenacoes" className="flex items-center gap-2">
-                <Network className="h-4 w-4" />
-                Coordenações
-              </TabsTrigger>
-              <TabsTrigger value="multiplicacoes" className="flex items-center gap-2">
-                <GitBranch className="h-4 w-4" />
-                Multiplicação (Antiga)
-              </TabsTrigger>
-              <TabsTrigger value="multiplicacoes-visual" className="flex items-center gap-2">
-                <GitBranch className="h-4 w-4" />
-                Multiplicação (Nova)
-              </TabsTrigger>
-              <TabsTrigger value="historico" className="flex items-center gap-2">
-                <History className="h-4 w-4" />
-                Histórico
-              </TabsTrigger>
-              <TabsTrigger value="insights" className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                Insights IA
-              </TabsTrigger>
-              <TabsTrigger value="fotos" className="flex items-center gap-2">
-                <Image className="h-4 w-4" />
-                Galeria de Fotos
-              </TabsTrigger>
+              <TabsTrigger value="coordenacoes" className="gap-1.5"><Network className="h-4 w-4" />Coordenações</TabsTrigger>
+              <TabsTrigger value="multiplicacoes" className="gap-1.5"><GitBranch className="h-4 w-4" />Multiplicação</TabsTrigger>
+              <TabsTrigger value="multiplicacoes-visual" className="gap-1.5"><GitBranch className="h-4 w-4" />Visual</TabsTrigger>
+              <TabsTrigger value="historico" className="gap-1.5"><History className="h-4 w-4" />Histórico</TabsTrigger>
+              <TabsTrigger value="insights" className="gap-1.5"><Sparkles className="h-4 w-4" />IA</TabsTrigger>
+              <TabsTrigger value="fotos" className="gap-1.5"><Image className="h-4 w-4" />Fotos</TabsTrigger>
               {supervisoes && supervisoes.length > 0 && (
-                <TabsTrigger value="supervisoes" className="flex items-center gap-2">
-                  <ClipboardCheck className="h-4 w-4" />
-                  Supervisões
-                </TabsTrigger>
+                <TabsTrigger value="supervisoes" className="gap-1.5"><ClipboardCheck className="h-4 w-4" />Supervisões</TabsTrigger>
               )}
             </TabsList>
 
-            <TabsContent value="multiplicacoes">
-              <MultiplicacoesTab />
-            </TabsContent>
-
-            <TabsContent value="multiplicacoes-visual">
-              <MultiplicacoesVisual celulas={celulas || []} />
-            </TabsContent>
-
-            <TabsContent value="insights">
-              <AIInsightsPanel 
-                reports={currentReports} 
-                periodLabel={formatDateRangeDisplay()}
-                context="rede"
-              />
-            </TabsContent>
+            <TabsContent value="multiplicacoes"><MultiplicacoesTab /></TabsContent>
+            <TabsContent value="multiplicacoes-visual"><MultiplicacoesVisual celulas={celulas || []} /></TabsContent>
+            <TabsContent value="insights"><AIInsightsPanel reports={currentReports} periodLabel={formatDateRangeDisplay()} context="rede" /></TabsContent>
 
             <TabsContent value="coordenacoes">
-              {/* Coordenações Table */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Network className="h-5 w-5" />
-                    Dados por Coordenação
-                  </CardTitle>
-                  <CardDescription>
-                    {Object.keys(reportsByCoordenacao).length} coordenação(ões) com relatórios nesta semana
-                  </CardDescription>
+                  <CardTitle className="text-base flex items-center gap-2"><Network className="h-5 w-5 text-primary" />Dados por Coordenação</CardTitle>
+                  <CardDescription>{Object.keys(reportsByCoordenacao).length} coordenação(ões) com relatórios</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {reportsLoading ? (
-                    <div className="flex items-center justify-center py-8">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
+                    <div className="flex items-center justify-center py-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
                   ) : Object.keys(reportsByCoordenacao).length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {Object.entries(reportsByCoordenacao).map(([coordId, coord]) => {
-                        const total = coord.totals.members_present + coord.totals.leaders_in_training + 
-                          coord.totals.discipleships + coord.totals.visitors + coord.totals.children;
+                        const total = coord.totals.members_present + coord.totals.leaders_in_training + coord.totals.discipleships + coord.totals.visitors + coord.totals.children;
                         const isExpanded = expandedCoords.has(coordId);
                         
                         return (
                           <Collapsible key={coordId} open={isExpanded} onOpenChange={() => toggleCoord(coordId)}>
-                            <Card>
+                            <Card className="border-l-4 border-l-accent">
                               <CollapsibleTrigger asChild>
-                                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                                <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors py-4">
                                   <div className="flex items-center justify-between">
-                                    <div>
-                                      <CardTitle className="text-base">{coord.name}</CardTitle>
+                                    <div className="space-y-0.5">
+                                      <CardTitle className="text-sm font-semibold">{coord.name}</CardTitle>
                                       {(() => {
                                         const coordObj = coordenacoes?.find(c => c.id === coordId);
                                         const couple = coordObj?.leadership_couple;
@@ -373,64 +226,57 @@ export function NetworkLeaderDashboard() {
                                           : couple?.spouse1?.name || couple?.spouse2?.name || null;
                                         return coupleName ? (
                                           <p className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <User className="h-3 w-3" />
-                                            Coordenadores: {coupleName}
+                                            <User className="h-3 w-3" />Coordenadores: {coupleName}
                                           </p>
                                         ) : null;
                                       })()}
-                                      <CardDescription>
-                                        {coord.reports.length} célula(s) • Total: {total}
-                                      </CardDescription>
+                                      <CardDescription className="text-xs">{coord.reports.length} célula(s) • Total: {total}</CardDescription>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                      <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
+                                    <div className="flex items-center gap-3">
+                                      <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
                                         <span>Membros: {coord.totals.members_present}</span>
                                         <span>•</span>
                                         <span>Visitantes: {coord.totals.visitors}</span>
                                       </div>
-                                      {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                                      {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
                                     </div>
                                   </div>
                                 </CardHeader>
                               </CollapsibleTrigger>
                               <CollapsibleContent>
                                 <CardContent className="pt-0">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow>
-                                        <TableHead>Célula</TableHead>
-                                        <TableHead className="text-center">Membros</TableHead>
-                                        <TableHead className="text-center">Líderes</TableHead>
-                                        <TableHead className="text-center">Disc.</TableHead>
-                                        <TableHead className="text-center">Vis.</TableHead>
-                                        <TableHead className="text-center">Crianças</TableHead>
-                                        <TableHead className="text-center">Ações</TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                      {coord.reports.map(report => (
-                                        <TableRow key={report.id}>
-                                          <TableCell className="font-medium">{report.celula?.name}</TableCell>
-                                          <TableCell className="text-center">{report.members_present}</TableCell>
-                                          <TableCell className="text-center">{report.leaders_in_training}</TableCell>
-                                          <TableCell className="text-center">{report.discipleships}</TableCell>
-                                          <TableCell className="text-center">{report.visitors}</TableCell>
-                                          <TableCell className="text-center">{report.children}</TableCell>
-                                          <TableCell className="text-center">
-                                            <Button 
-                                              variant="ghost" 
-                                              size="sm"
-                                              onClick={() => {
-                                                setSelectedCelula({ id: report.celula_id, name: report.celula?.name || '' });
-                                              }}
-                                            >
-                                              <Eye className="h-4 w-4" />
-                                            </Button>
-                                          </TableCell>
+                                  <div className="rounded-lg border overflow-hidden">
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow className="bg-muted/50">
+                                          <TableHead>Célula</TableHead>
+                                          <TableHead className="text-center">Membros</TableHead>
+                                          <TableHead className="text-center">Líderes</TableHead>
+                                          <TableHead className="text-center">Disc.</TableHead>
+                                          <TableHead className="text-center">Vis.</TableHead>
+                                          <TableHead className="text-center">Crianças</TableHead>
+                                          <TableHead className="text-center">Ações</TableHead>
                                         </TableRow>
-                                      ))}
-                                    </TableBody>
-                                  </Table>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {coord.reports.map(report => (
+                                          <TableRow key={report.id} className="hover:bg-muted/30">
+                                            <TableCell className="font-medium text-sm">{report.celula?.name}</TableCell>
+                                            <TableCell className="text-center">{report.members_present}</TableCell>
+                                            <TableCell className="text-center">{report.leaders_in_training}</TableCell>
+                                            <TableCell className="text-center">{report.discipleships}</TableCell>
+                                            <TableCell className="text-center">{report.visitors}</TableCell>
+                                            <TableCell className="text-center">{report.children}</TableCell>
+                                            <TableCell className="text-center">
+                                              <Button variant="ghost" size="sm" onClick={() => setSelectedCelula({ id: report.celula_id, name: report.celula?.name || '' })}>
+                                                <Eye className="h-4 w-4" />
+                                              </Button>
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
                                 </CardContent>
                               </CollapsibleContent>
                             </Card>
@@ -439,42 +285,31 @@ export function NetworkLeaderDashboard() {
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      Nenhum relatório encontrado para esta semana.
-                    </div>
+                    <EmptyState icon={Network} title="Nenhum relatório" description="Nenhum relatório encontrado para esta semana." />
                   )}
                 </CardContent>
               </Card>
             </TabsContent>
 
             <TabsContent value="historico">
-              <ReportsHistoryTable 
-                reports={currentReports} 
-                onEdit={handleEditReport}
-                onDelete={handleDeleteReport}
-              />
+              <ReportsHistoryTable reports={currentReports} onEdit={handleEditReport} onDelete={handleDeleteReport} />
             </TabsContent>
 
-            <TabsContent value="fotos">
-              <CelulaPhotoGallery reports={currentReports} />
-            </TabsContent>
+            <TabsContent value="fotos"><CelulaPhotoGallery reports={currentReports} /></TabsContent>
             
             {supervisoes && supervisoes.length > 0 && (
-              <TabsContent value="supervisoes">
-                <SupervisoesList supervisoes={supervisoes} />
-              </TabsContent>
+              <TabsContent value="supervisoes"><SupervisoesList supervisoes={supervisoes} /></TabsContent>
             )}
           </Tabs>
         </>
       )}
 
+      {!selectedRede && (
+        <EmptyState icon={Network} title="Selecione uma rede" description="Escolha a rede para visualizar os relatórios" />
+      )}
+
       {selectedCelula && (
-        <CelulaDetailsDialog
-          open={!!selectedCelula}
-          onOpenChange={(open) => { if (!open) setSelectedCelula(null); }}
-          celulaId={selectedCelula.id}
-          celulaName={selectedCelula.name}
-        />
+        <CelulaDetailsDialog open={!!selectedCelula} onOpenChange={(open) => { if (!open) setSelectedCelula(null); }} celulaId={selectedCelula.id} celulaName={selectedCelula.name} />
       )}
     </div>
   );

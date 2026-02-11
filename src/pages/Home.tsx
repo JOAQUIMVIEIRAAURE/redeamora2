@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useRole } from '@/contexts/RoleContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Home as HomeIcon, FolderTree, Network, Shield, ClipboardCheck, Lock } from 'lucide-react';
+import { Home as HomeIcon, FolderTree, Network, Shield, ClipboardCheck, Lock, Heart } from 'lucide-react';
 import { AccessCodeDialog } from '@/components/access/AccessCodeDialog';
 import { ACCESS_CODES, requiresAccessCode, type RoleType } from '@/config/accessCodes';
 
@@ -12,42 +12,36 @@ const roleOptions: Array<{
   title: string;
   description: string;
   icon: typeof HomeIcon;
-  colorClass: string;
 }> = [
   {
     role: 'celula_leader',
     title: 'Líder de Célula',
-    description: 'Acesse o dashboard para gerenciar sua célula, registrar presenças e enviar relatórios semanais.',
+    description: 'Gerencie sua célula, registre presenças e envie relatórios semanais.',
     icon: HomeIcon,
-    colorClass: 'bg-orange-500 hover:bg-orange-600',
   },
   {
     role: 'supervisor',
     title: 'Supervisor',
-    description: 'Registre supervisões de células, avalie o roteiro e acompanhe o desempenho das células.',
+    description: 'Registre supervisões e acompanhe o desempenho das células.',
     icon: ClipboardCheck,
-    colorClass: 'bg-purple-500 hover:bg-purple-600',
   },
   {
     role: 'coordenador',
     title: 'Coordenador',
-    description: 'Visualize as células da sua coordenação, acompanhe métricas e gerencie líderes.',
+    description: 'Visualize métricas da coordenação e gerencie líderes.',
     icon: FolderTree,
-    colorClass: 'bg-green-500 hover:bg-green-600',
   },
   {
     role: 'rede_leader',
     title: 'Líder de Rede',
-    description: 'Acompanhe métricas consolidadas por coordenação e exporte dados da rede.',
+    description: 'Acompanhe métricas consolidadas por coordenação e exporte dados.',
     icon: Network,
-    colorClass: 'bg-primary hover:bg-primary/90',
   },
   {
     role: 'admin',
     title: 'Administrador',
-    description: 'Acesso total ao sistema: gerencie redes, coordenações, células, membros e usuários.',
+    description: 'Acesso total: redes, coordenações, células, membros e usuários.',
     icon: Shield,
-    colorClass: 'bg-destructive hover:bg-destructive/90',
   },
 ];
 
@@ -62,7 +56,6 @@ export default function HomePage() {
       setSelectedRoleForAccess(role);
       setAccessDialogOpen(true);
     } else {
-      // Acesso direto sem código (apenas Líder de Célula)
       setSelectedRole(role);
       navigate('/dashboard');
     }
@@ -84,16 +77,16 @@ export default function HomePage() {
     : '';
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl">
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-primary-foreground text-3xl">
-              ❤️
+    <div className="min-h-screen bg-gradient-to-br from-accent via-background to-secondary flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl animate-fade-in">
+        <div className="text-center mb-10">
+          <div className="flex justify-center mb-5">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25">
+              <Heart className="h-8 w-8 text-primary-foreground fill-primary-foreground" />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Rede Amor a 2</h1>
-          <p className="text-muted-foreground">Sistema de Gestão de Células</p>
+          <h1 className="text-4xl font-bold tracking-tight text-foreground">Igreja do Amor</h1>
+          <p className="text-muted-foreground mt-1 text-lg tracking-wide">Rede Amoradores</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -104,28 +97,29 @@ export default function HomePage() {
             return (
               <Card 
                 key={option.role} 
-                className="cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1"
+                className="cursor-pointer card-hover group"
                 onClick={() => handleRoleSelect(option.role)}
               >
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-lg ${option.colorClass} text-white`}>
-                      <IconComponent className="h-6 w-6" />
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                      <IconComponent className="h-5 w-5 text-accent-foreground group-hover:text-primary-foreground" />
                     </div>
                     <div className="flex items-center gap-2 flex-1">
-                      <CardTitle className="text-xl">{option.title}</CardTitle>
+                      <CardTitle className="text-lg">{option.title}</CardTitle>
                       {needsCode && (
-                        <Lock className="h-4 w-4 text-muted-foreground" aria-label="Requer código de acesso" />
+                        <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-label="Requer código de acesso" />
                       )}
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-sm">
+                  <CardDescription className="text-sm leading-relaxed">
                     {option.description}
                   </CardDescription>
                   <Button 
-                    className={`w-full mt-4 ${option.colorClass} text-white`}
+                    variant={needsCode ? "outline" : "default"}
+                    className="w-full mt-4"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleRoleSelect(option.role);
@@ -133,7 +127,7 @@ export default function HomePage() {
                   >
                     {needsCode ? (
                       <span className="flex items-center gap-2">
-                        <Lock className="h-4 w-4" />
+                        <Lock className="h-3.5 w-3.5" />
                         Acessar
                       </span>
                     ) : (
@@ -146,7 +140,7 @@ export default function HomePage() {
           })}
         </div>
 
-        <p className="text-center text-sm text-muted-foreground mt-8">
+        <p className="text-center text-xs text-muted-foreground mt-8">
           🔒 Áreas administrativas protegidas por código de acesso
         </p>
       </div>
