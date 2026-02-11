@@ -2,88 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 10%;
+    --background: 30 20% 99%;
+    --foreground: 20 15% 15%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
+    --card: 30 20% 98%;
+    --card-foreground: 20 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover-foreground: 20 15% 15%;
 
-    --primary: 0 72% 50%;
+    --primary: 4 65% 48%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 25 15% 95%;
+    --secondary-foreground: 20 15% 20%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 25 12% 94%;
+    --muted-foreground: 20 8% 46%;
 
-    --accent: 0 30% 95%;
-    --accent-foreground: 0 72% 40%;
+    --accent: 4 40% 95%;
+    --accent-foreground: 4 65% 40%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 72% 50%;
+    --success: 152 55% 42%;
+    --success-foreground: 0 0% 100%;
 
-    --radius: 0.5rem;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    --sidebar-background: 0 72% 50%;
+    --border: 25 15% 90%;
+    --input: 25 15% 90%;
+    --ring: 4 65% 48%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 4 65% 48%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 72% 50%;
-    --sidebar-accent: 0 72% 45%;
+    --sidebar-primary-foreground: 4 65% 48%;
+    --sidebar-accent: 4 65% 42%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 72% 40%;
+    --sidebar-border: 4 65% 38%;
     --sidebar-ring: 0 0% 100%;
   }
 
   .dark {
-    --background: 0 0% 8%;
-    --foreground: 0 0% 98%;
+    --background: 20 12% 7%;
+    --foreground: 25 10% 95%;
 
-    --card: 0 0% 12%;
-    --card-foreground: 0 0% 98%;
+    --card: 20 12% 10%;
+    --card-foreground: 25 10% 95%;
 
-    --popover: 0 0% 12%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 20 12% 10%;
+    --popover-foreground: 25 10% 95%;
 
-    --primary: 0 72% 55%;
+    --primary: 4 65% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 18%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 20 10% 16%;
+    --secondary-foreground: 25 10% 95%;
 
-    --muted: 0 0% 18%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 20 10% 16%;
+    --muted-foreground: 25 8% 60%;
 
-    --accent: 0 40% 20%;
-    --accent-foreground: 0 72% 70%;
+    --accent: 4 35% 18%;
+    --accent-foreground: 4 65% 70%;
 
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 72% 55%;
+    --success: 152 55% 35%;
+    --success-foreground: 0 0% 100%;
 
-    --sidebar-background: 0 72% 40%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 20 10% 18%;
+    --input: 20 10% 18%;
+    --ring: 4 65% 55%;
+
+    --sidebar-background: 4 65% 38%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 72% 50%;
-    --sidebar-accent: 0 72% 35%;
+    --sidebar-primary-foreground: 4 65% 48%;
+    --sidebar-accent: 4 65% 32%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 72% 30%;
+    --sidebar-border: 4 65% 28%;
     --sidebar-ring: 0 0% 100%;
   }
 }
@@ -94,6 +104,35 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .card-hover {
+    @apply transition-all duration-200 ease-out;
+  }
+  .card-hover:hover {
+    @apply shadow-lg -translate-y-0.5;
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
