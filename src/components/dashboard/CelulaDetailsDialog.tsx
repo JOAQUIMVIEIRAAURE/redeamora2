@@ -189,7 +189,7 @@ export function CelulaDetailsDialog({ open, onOpenChange, celulaId, celulaName }
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh]">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -229,7 +229,7 @@ export function CelulaDetailsDialog({ open, onOpenChange, celulaId, celulaName }
 
               {/* RELATÓRIO SEMANAL */}
               <TabsContent value="relatorio">
-                <ScrollArea className="max-h-[60vh] pr-4">
+                <ScrollArea className="pr-4">
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-sm flex items-center gap-2">
