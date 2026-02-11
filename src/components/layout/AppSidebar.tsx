@@ -7,7 +7,8 @@ import {
   Home,
   ClipboardCheck,
   Settings,
-  LogOut
+  LogOut,
+  Database
 } from 'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -35,11 +36,13 @@ const roleLabels: Record<string, string> = {
 // Items only for cell leader - just dashboard
 const cellLeaderNavItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { title: 'Dados', href: '/dados', icon: Database },
 ];
 
 // Full nav items for coordinator and above
 const fullNavItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { title: 'Dados', href: '/dados', icon: Database },
   { title: 'Células', href: '/celulas', icon: Home },
   { title: 'Membros', href: '/membros', icon: Users },
   { title: 'Presença', href: '/presenca', icon: ClipboardCheck },

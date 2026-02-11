@@ -69,7 +69,12 @@ export function CellLeaderDashboard() {
                   {celula.meeting_time && ` às ${celula.meeting_time}`}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-1">
+                {celula.leadership_couple && (
+                  <p className="text-sm font-medium text-foreground">
+                    👫 {celula.leadership_couple.spouse1?.name} & {celula.leadership_couple.spouse2?.name}
+                  </p>
+                )}
                 {celula.address && (
                   <p className="text-sm text-muted-foreground">{celula.address}</p>
                 )}
