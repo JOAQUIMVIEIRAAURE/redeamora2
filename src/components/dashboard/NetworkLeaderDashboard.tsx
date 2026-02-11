@@ -125,7 +125,7 @@ export function NetworkLeaderDashboard() {
     const redeName = redes?.find(r => r.id === selectedRede)?.name || 'Rede';
     const filename = `Relatorio_${redeName}_${getDateString(dateRange.from)}_${getDateString(dateRange.to)}`;
 
-    exportToExcel(redeData.reports, celulas, coordenacoes, filename);
+    exportToExcel({ reports: redeData.reports, celulas, coordenacoes, periodLabel: filename });
     
     toast({
       title: 'Sucesso',
@@ -143,15 +143,48 @@ export function NetworkLeaderDashboard() {
 
   const userRedes = redes || [];
   const currentReports = redeData?.reports || [];
-  const reportsByCoordenacao = redeData?.byCoordenacao || {};
+  const redeCelulas = redeData?.celulas || [];
+  const redeCoordenacoes = redeData?.coordenacoes || [];
+
+  // Compute totals from reports
+  const totals = currentReports.reduce(
+    (acc, r) => ({
+      members_present: acc.members_present + r.members_present,
+      leaders_in_training: acc.leaders_in_training + r.leaders_in_training,
+      discipleships: acc.discipleships + r.discipleships,
+      visitors: acc.visitors + r.visitors,
+      children: acc.children + r.children,
+    }),
+    { members_present: 0, leaders_in_training: 0, discipleships: 0, visitors: 0, children: 0 }
+  );
+
+  // Group reports by coordenacao
+  const reportsByCoordenacao: Record<string, { name: string; reports: WeeklyReport[]; totals: typeof totals }> = {};
+  redeCoordenacoes.forEach(coord => {
+    const coordCelulaIds = redeCelulas.filter(c => c.coordenacao_id === coord.id).map(c => c.id);
+    const coordReports = currentReports.filter(r => coordCelulaIds.includes(r.celula_id));
+    const coordTotals = coordReports.reduce(
+      (acc, r) => ({
+        members_present: acc.members_present + r.members_present,
+        leaders_in_training: acc.leaders_in_training + r.leaders_in_training,
+        discipleships: acc.discipleships + r.discipleships,
+        visitors: acc.visitors + r.visitors,
+        children: acc.children + r.children,
+      }),
+      { members_present: 0, leaders_in_training: 0, discipleships: 0, visitors: 0, children: 0 }
+    );
+    if (coordReports.length > 0) {
+      reportsByCoordenacao[coord.id] = { name: coord.name, reports: coordReports, totals: coordTotals };
+    }
+  });
 
   const statCards = [
-    { icon: Users, label: 'Membros Presentes', value: redeData?.totals.members_present || 0 },
-    { icon: UserCheck, label: 'Líderes em Treino', value: redeData?.totals.leaders_in_training || 0 },
-    { icon: Heart, label: 'Discipulados', value: redeData?.totals.discipleships || 0 },
-    { icon: UserPlus, label: 'Visitantes', value: redeData?.totals.visitors || 0 },
-    { icon: Baby, label: 'Crianças', value: redeData?.totals.children || 0 },
-    { icon: FileSpreadsheet, label: 'Total de Células', value: redeData?.reports.length || 0 },
+    { icon: Users, label: 'Membros Presentes', value: totals.members_present },
+    { icon: UserCheck, label: 'Líderes em Treino', value: totals.leaders_in_training },
+    { icon: Heart, label: 'Discipulados', value: totals.discipleships },
+    { icon: UserPlus, label: 'Visitantes', value: totals.visitors },
+    { icon: Baby, label: 'Crianças', value: totals.children },
+    { icon: FileSpreadsheet, label: 'Total de Células', value: currentReports.length },
   ];
 
   const selectedRedeData = userRedes.find(r => r.id === selectedRede);
@@ -404,14 +437,13 @@ export function NetworkLeaderDashboard() {
             <TabsContent value="historico">
               <ReportsHistoryTable 
                 reports={currentReports} 
-                isLoading={reportsLoading}
                 onEdit={handleEditReport}
                 onDelete={handleDeleteReport}
               />
             </TabsContent>
 
             <TabsContent value="fotos">
-              <CelulaPhotoGallery redeId={selectedRede} />
+              <CelulaPhotoGallery reports={currentReports} />
             </TabsContent>
             
             {supervisoes && supervisoes.length > 0 && (
@@ -425,10 +457,10 @@ export function NetworkLeaderDashboard() {
 
       {selectedCelula && (
         <CelulaDetailsDialog
+          open={!!selectedCelula}
+          onOpenChange={(open) => { if (!open) setSelectedCelula(null); }}
           celulaId={selectedCelula.id}
           celulaName={selectedCelula.name}
-          isOpen={!!selectedCelula}
-          onClose={() => setSelectedCelula(null)}
         />
       )}
     </div>
