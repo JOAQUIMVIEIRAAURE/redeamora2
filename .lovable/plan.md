@@ -1,61 +1,31 @@
 
 
-## Sistema de Gestão para Igreja
+## Correção da Rolagem no Dashboard do Líder de Célula
 
-Um sistema completo para gerenciar células, presenças e acompanhar o crescimento da igreja com uma interface limpa e intuitiva.
+### Problema
 
----
+O `DialogContent` do modal de detalhes da célula tem `max-h-[90vh]` mas nenhuma propriedade de overflow, impedindo a rolagem quando o conteúdo excede a altura da tela.
 
-### 🔐 Autenticação e Papéis
+### Solução
 
-**Login com Google** via Supabase Auth para facilitar o acesso dos membros.
+Ajuste mínimo em **um único arquivo**: `src/components/dashboard/CelulaDetailsDialog.tsx`
 
-**4 níveis de acesso hierárquicos:**
-- **Admin** - Acesso total ao sistema, gerencia todos os usuários e configurações
-- **Líder de Rede** - Supervisiona múltiplos coordenadores e suas células
-- **Coordenador** - Gerencia um grupo de células e seus líderes
-- **Líder de Célula** - Gerencia sua própria célula e registra presenças
+### Mudanças
 
----
+1. **Linha 192** - Adicionar `overflow-y-auto` ao `DialogContent`:
+   - De: `className="max-w-4xl max-h-[90vh]"`
+   - Para: `className="max-w-4xl max-h-[90vh] overflow-y-auto"`
 
-### 👥 Gestão de Células/Grupos
+2. **Linha 232** - Remover `max-h-[60vh]` do `ScrollArea` da aba "Relatório" para evitar dupla restrição de altura. O scroll do DialogContent pai já cuida da rolagem:
+   - De: `className="max-h-[60vh] pr-4"`
+   - Para: `className="pr-4"`
 
-- Criar e editar células com nome, endereço e dia/horário do encontro
-- Vincular líder responsável a cada célula
-- Organizar células dentro de coordenações
-- Agrupar coordenações em redes
-- Visualizar membros de cada célula
+Isso garante que:
+- A barra de rolagem aparece apenas quando necessário
+- Funciona em mobile e desktop
+- Nenhuma alteração visual além do comportamento de scroll
+- As outras abas (Histórico, Fotos, Membros, Casais) também se beneficiam da correção
 
----
+### Detalhes Técnicos
 
-### ✅ Controle de Presença
-
-- Registrar presença dos membros em cada reunião de célula
-- Histórico de frequência por membro
-- Líderes podem marcar presença facilmente via interface simples
-- Registro de visitantes em cada encontro
-
----
-
-### 📊 Dashboard com Relatórios
-
-**Visão geral com métricas importantes:**
-- Total de membros ativos
-- Número de células por rede/coordenação
-- Taxa de frequência média
-- Crescimento ao longo do tempo
-
-**Gráficos visuais:**
-- Evolução de membros por período
-- Comparativo de presença entre células
-- Distribuição de membros por rede
-
----
-
-### 🎨 Design Minimalista
-
-- Cores neutras com acentos sutis
-- Layout limpo com bastante espaço em branco
-- Navegação simples e intuitiva por sidebar
-- Design responsivo para uso em celular também
-
+O `DialogContent` do Radix UI usa `position: fixed` com `translate`, o que cria um contexto de formatação onde `overflow: hidden` é o padrão. Adicionar `overflow-y: auto` resolve sem afetar o posicionamento ou animações do dialog.
