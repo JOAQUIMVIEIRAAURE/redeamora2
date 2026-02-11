@@ -1,16 +1,16 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Users, 
-  Network, 
+import {
+  LayoutDashboard,
+  Users,
+  Network,
   FolderTree,
   Home,
   ClipboardCheck,
   Settings,
   LogOut,
   Database,
-  Heart
-} from 'lucide-react';
+  Heart } from
+'lucide-react';
 import { useRole } from '@/contexts/RoleContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,34 +24,34 @@ import {
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-} from '@/components/ui/sidebar';
+  SidebarMenuItem } from
+'@/components/ui/sidebar';
 
 const roleLabels: Record<string, string> = {
   admin: 'Administrador',
   rede_leader: 'Líder de Rede',
   coordenador: 'Coordenador',
   supervisor: 'Supervisor',
-  celula_leader: 'Líder de Célula',
+  celula_leader: 'Líder de Célula'
 };
 
 const cellLeaderNavItems = [
-  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-];
+{ title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }];
+
 
 const fullNavItems = [
-  { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { title: 'Dados', href: '/dados', icon: Database },
-  { title: 'Células', href: '/celulas', icon: Home },
-  { title: 'Membros', href: '/membros', icon: Users },
-  { title: 'Presença', href: '/presenca', icon: ClipboardCheck },
-];
+{ title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+{ title: 'Dados', href: '/dados', icon: Database },
+{ title: 'Células', href: '/celulas', icon: Home },
+{ title: 'Membros', href: '/membros', icon: Users },
+{ title: 'Presença', href: '/presenca', icon: ClipboardCheck }];
+
 
 const adminNavItems = [
-  { title: 'Redes', href: '/redes', icon: Network },
-  { title: 'Coordenações', href: '/coordenacoes', icon: FolderTree },
-  { title: 'Configurações', href: '/configuracoes', icon: Settings },
-];
+{ title: 'Redes', href: '/redes', icon: Network },
+{ title: 'Coordenações', href: '/coordenacoes', icon: FolderTree },
+{ title: 'Configurações', href: '/configuracoes', icon: Settings }];
+
 
 export function AppSidebar() {
   const location = useLocation();
@@ -59,10 +59,10 @@ export function AppSidebar() {
   const { selectedRole, setSelectedRole, isAdmin, isRedeLeader, isCoordenador, isSupervisor, isCelulaLeader } = useRole();
 
   const showAdminItems = isAdmin || isRedeLeader;
-  
-  const mainNavItems = (isCelulaLeader || isSupervisor) && !isCoordenador && !isRedeLeader && !isAdmin 
-    ? cellLeaderNavItems 
-    : fullNavItems;
+
+  const mainNavItems = (isCelulaLeader || isSupervisor) && !isCoordenador && !isRedeLeader && !isAdmin ?
+  cellLeaderNavItems :
+  fullNavItems;
 
   const handleLogout = () => {
     setSelectedRole(null);
@@ -78,7 +78,7 @@ export function AppSidebar() {
           </div>
           <div className="flex flex-col">
             <span className="font-semibold text-sidebar-foreground text-sm">Igreja do Amor</span>
-            <span className="text-[11px] text-sidebar-foreground/60 tracking-wide">Rede Amoradores</span>
+            <span className="text-[11px] text-sidebar-foreground/60 tracking-wide">Rede Amor a 2</span>
           </div>
         </div>
       </SidebarHeader>
@@ -88,8 +88,8 @@ export function AppSidebar() {
           <SidebarGroupLabel className="text-sidebar-foreground/50 text-[10px] uppercase tracking-widest px-3">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {mainNavItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
+              {mainNavItems.map((item) =>
+              <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton asChild isActive={location.pathname === item.href} className="h-11 rounded-xl">
                     <NavLink to={item.href}>
                       <item.icon className="h-4 w-4" />
@@ -97,18 +97,18 @@ export function AppSidebar() {
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {showAdminItems && (
-          <SidebarGroup>
+        {showAdminItems &&
+        <SidebarGroup>
             <SidebarGroupLabel className="text-sidebar-foreground/50 text-[10px] uppercase tracking-widest px-3">Admin</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminNavItems.map((item) => (
-                  <SidebarMenuItem key={item.href}>
+                {adminNavItems.map((item) =>
+              <SidebarMenuItem key={item.href}>
                     <SidebarMenuButton asChild isActive={location.pathname === item.href} className="h-11 rounded-xl">
                       <NavLink to={item.href}>
                         <item.icon className="h-4 w-4" />
@@ -116,11 +116,11 @@ export function AppSidebar() {
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ))}
+              )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        )}
+        }
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border/50 p-4">
@@ -140,12 +140,12 @@ export function AppSidebar() {
             size="icon"
             onClick={handleLogout}
             className="h-9 w-9 shrink-0 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-            title="Voltar à seleção de papel"
-          >
+            title="Voltar à seleção de papel">
+
             <LogOut className="h-4 w-4" />
           </Button>
         </div>
       </SidebarFooter>
-    </Sidebar>
-  );
+    </Sidebar>);
+
 }
