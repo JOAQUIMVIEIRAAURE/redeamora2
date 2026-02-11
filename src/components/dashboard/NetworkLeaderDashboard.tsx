@@ -365,6 +365,19 @@ export function NetworkLeaderDashboard() {
                                   <div className="flex items-center justify-between">
                                     <div>
                                       <CardTitle className="text-base">{coord.name}</CardTitle>
+                                      {(() => {
+                                        const coordObj = coordenacoes?.find(c => c.id === coordId);
+                                        const couple = coordObj?.leadership_couple;
+                                        const coupleName = couple?.spouse1?.name && couple?.spouse2?.name
+                                          ? `${couple.spouse1.name} & ${couple.spouse2.name}`
+                                          : couple?.spouse1?.name || couple?.spouse2?.name || null;
+                                        return coupleName ? (
+                                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                            <User className="h-3 w-3" />
+                                            Coordenadores: {coupleName}
+                                          </p>
+                                        ) : null;
+                                      })()}
                                       <CardDescription>
                                         {coord.reports.length} célula(s) • Total: {total}
                                       </CardDescription>

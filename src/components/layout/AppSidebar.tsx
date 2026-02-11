@@ -33,13 +33,12 @@ const roleLabels: Record<string, string> = {
   celula_leader: 'Líder de Célula',
 };
 
-// Items only for cell leader - just dashboard
+// Items only for cell leader - just dashboard (no Dados)
 const cellLeaderNavItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { title: 'Dados', href: '/dados', icon: Database },
 ];
 
-// Full nav items for coordinator and above
+// Nav items for coordinator and above (includes Dados)
 const fullNavItems = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Dados', href: '/dados', icon: Database },
@@ -57,12 +56,12 @@ const adminNavItems = [
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { selectedRole, setSelectedRole, isAdmin, isRedeLeader, isCoordenador, isCelulaLeader } = useRole();
+  const { selectedRole, setSelectedRole, isAdmin, isRedeLeader, isCoordenador, isSupervisor, isCelulaLeader } = useRole();
 
   const showAdminItems = isAdmin || isRedeLeader;
   
-  // Cell leader only sees Dashboard, coordinators and above see full menu
-  const mainNavItems = isCelulaLeader && !isCoordenador && !isRedeLeader && !isAdmin 
+  // Cell leader and supervisor only see Dashboard; coordinators and above see full menu
+  const mainNavItems = (isCelulaLeader || isSupervisor) && !isCoordenador && !isRedeLeader && !isAdmin 
     ? cellLeaderNavItems 
     : fullNavItems;
 

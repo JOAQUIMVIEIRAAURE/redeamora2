@@ -1,4 +1,6 @@
 import { useState, useMemo } from 'react';
+import { Navigate } from 'react-router-dom';
+import { useRole } from '@/contexts/RoleContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,9 +21,9 @@ import { useWeeklyReports, DateRangeFilter } from '@/hooks/useWeeklyReports';
 import { useMultiplicacoes } from '@/hooks/useMultiplicacoes';
 import { useDadosAggregations } from '@/hooks/useDadosReports';
 import { useMemberRanking, RankedMember } from '@/hooks/useMemberRanking';
+import { exportToExcel } from '@/utils/exportReports';
 import { format, subDays, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import * as XLSX from 'xlsx';
 
 const milestoneLabels: Record<string, string> = {
   batismo: 'Batismo',
@@ -34,6 +36,8 @@ const milestoneLabels: Record<string, string> = {
 };
 
 export default function Dados() {
+  const { isSupervisor, isCelulaLeader, isAdmin, isRedeLeader, isCoordenador } = useRole();
+
   const [dateRange, setDateRange] = useState<DateRangeValue>({
     from: subDays(new Date(), 29),
     to: new Date(),
@@ -108,37 +112,26 @@ export default function Dados() {
   const periodLabel = `${format(dateRange.from, "dd/MM/yyyy", { locale: ptBR })} - ${format(dateRange.to, "dd/MM/yyyy", { locale: ptBR })}`;
 
   const handleExportCSV = () => {
-    const wb = XLSX.utils.book_new();
-
-    // Export current tab data as sheets
-    if (byCelula.length > 0) {
-      const data = byCelula.map(c => ({
-        Célula: c.name,
-        Coordenação: c.coordenacaoName,
-        Líderes: c.leaderCouple || '—',
-        Membros: c.membersCount,
-        Visitantes: c.visitors,
-        Relatórios: c.reportsCount,
-      }));
-      const ws = XLSX.utils.json_to_sheet(data);
-      XLSX.utils.book_append_sheet(wb, ws, 'Por Célula');
-    }
-
-    if (ranking.length > 0) {
-      const data = ranking.map((r, i) => ({
-        Posição: i + 1,
-        Nome: r.name,
-        Célula: r.celulaName,
-        'Meses na Igreja': r.monthsInChurch,
-        Marcos: r.milestonesCount,
-        Pontuação: r.totalScore,
-      }));
-      const ws = XLSX.utils.json_to_sheet(data);
-      XLSX.utils.book_append_sheet(wb, ws, 'Ranking');
-    }
-
-    XLSX.writeFile(wb, `Dados_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    exportToExcel({
+      reports: filteredReports,
+      celulas: filteredCelulas,
+      coordenacoes: filteredCoords,
+      redes: redes || [],
+      members: filteredMembers,
+      periodLabel,
+      byRede,
+      byCoordenacao,
+      byCelula,
+      byLider,
+      ranking,
+      kpis,
+    });
   };
+
+  // Redirect unauthorized roles (after all hooks)
+  if ((isSupervisor || isCelulaLeader) && !isAdmin && !isRedeLeader && !isCoordenador) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   if (isLoading) {
     return (
