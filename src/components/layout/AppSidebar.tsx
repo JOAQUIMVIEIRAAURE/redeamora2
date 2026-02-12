@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   Database,
+  GitBranch,
   Heart } from
 'lucide-react';
 import logoIgreja from '@/assets/logo-igreja-do-amor.png';
@@ -37,7 +38,8 @@ const roleLabels: Record<string, string> = {
 };
 
 const cellLeaderNavItems = [
-{ title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard }];
+{ title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+{ title: 'Organograma', href: '/organograma', icon: GitBranch }];
 
 
 const fullNavItems = [
@@ -45,7 +47,8 @@ const fullNavItems = [
 { title: 'Dados', href: '/dados', icon: Database },
 { title: 'Células', href: '/celulas', icon: Home },
 { title: 'Membros', href: '/membros', icon: Users },
-{ title: 'Presença', href: '/presenca', icon: ClipboardCheck }];
+{ title: 'Presença', href: '/presenca', icon: ClipboardCheck },
+{ title: 'Organograma', href: '/organograma', icon: GitBranch }];
 
 
 const adminNavItems = [
