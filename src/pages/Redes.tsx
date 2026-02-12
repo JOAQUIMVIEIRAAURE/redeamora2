@@ -3,11 +3,11 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Plus, Search, Loader2, MoreVertical, Pencil, Trash2, FolderTree } from 'lucide-react';
+import { Plus, Search, Loader2, MoreVertical, Pencil, Trash2, FolderTree, Heart } from 'lucide-react';
 import { useRedes, Rede } from '@/hooks/useRedes';
+import { getCoupleDisplayName } from '@/hooks/useLeadershipCouples';
 import { RedeFormDialog } from '@/components/redes/RedeFormDialog';
 import { DeleteRedeDialog } from '@/components/redes/DeleteRedeDialog';
 
@@ -74,7 +74,7 @@ export default function Redes() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
-                    <TableHead>Líder</TableHead>
+                    <TableHead>Casal Líder</TableHead>
                     <TableHead>Coordenações</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
@@ -84,16 +84,13 @@ export default function Redes() {
                     <TableRow key={rede.id}>
                       <TableCell className="font-medium">{rede.name}</TableCell>
                       <TableCell>
-                        {rede.leader ? (
+                        {rede.leadership_couple ? (
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={rede.leader.avatar_url || undefined} />
-                              <AvatarFallback className="text-xs">
-                                {rede.leader.name?.charAt(0).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{rede.leader.name}</span>
+                            <Heart className="h-4 w-4 text-primary" />
+                            <span className="text-sm">{getCoupleDisplayName(rede.leadership_couple)}</span>
                           </div>
+                        ) : rede.leader ? (
+                          <span className="text-sm">{rede.leader.name}</span>
                         ) : (
                           <span className="text-muted-foreground text-sm">-</span>
                         )}

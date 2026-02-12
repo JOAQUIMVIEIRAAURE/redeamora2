@@ -1,10 +1,10 @@
 import { Celula } from '@/hooks/useCelulas';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreVertical, Pencil, Trash2, Users, MapPin, Calendar } from 'lucide-react';
+import { MoreVertical, Pencil, Trash2, Users, MapPin, Calendar, Heart } from 'lucide-react';
+import { getCoupleDisplayName } from '@/hooks/useLeadershipCouples';
 
 interface CelulaCardProps {
   celula: Celula;
@@ -46,19 +46,17 @@ export function CelulaCard({ celula, onEdit, onDelete }: CelulaCardProps) {
         </DropdownMenu>
       </CardHeader>
       <CardContent className="space-y-3">
-        {celula.leader && (
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={celula.leader.avatar_url || undefined} />
-              <AvatarFallback className="text-xs">
-                {celula.leader.name?.charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-muted-foreground">
-              {celula.leader.name}
-            </span>
+        {celula.leadership_couple ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Heart className="h-4 w-4 text-primary" />
+            <span>{getCoupleDisplayName(celula.leadership_couple)}</span>
           </div>
-        )}
+        ) : celula.leader ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Users className="h-4 w-4" />
+            <span>{celula.leader.name}</span>
+          </div>
+        ) : null}
         
         <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
           <div className="flex items-center gap-1">
