@@ -12,7 +12,7 @@ export function AppLayout({ children, title }: AppLayoutProps) {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/50 px-4 bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b border-border/30 px-4 bg-background/90 backdrop-blur-sm sticky top-0 z-10">
           <SidebarTrigger className="-ml-1" />
           {title && (
             <>

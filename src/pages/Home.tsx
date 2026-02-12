@@ -81,7 +81,7 @@ export default function HomePage() {
       <div className="w-full max-w-4xl animate-fade-in">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 glow-gold">
               <Heart className="h-8 w-8 text-primary-foreground fill-primary-foreground" />
             </div>
           </div>

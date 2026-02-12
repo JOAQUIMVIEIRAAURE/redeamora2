@@ -212,7 +212,7 @@ export function NetworkLeaderDashboard() {
                         
                         return (
                           <Collapsible key={coordId} open={isExpanded} onOpenChange={() => toggleCoord(coordId)}>
-                            <Card className="border-l-4 border-l-accent">
+                            <Card className="border-l-4 border-l-primary/40">
                               <CollapsibleTrigger asChild>
                                 <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors py-4">
                                   <div className="flex items-center justify-between">

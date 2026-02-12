@@ -14,8 +14,8 @@ export function PageHeader({ title, subtitle, icon: Icon, actions }: PageHeaderP
       <div className="space-y-1">
         <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2.5">
           {Icon && (
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-accent">
-              <Icon className="h-5 w-5 text-accent-foreground" />
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
+              <Icon className="h-5 w-5 text-primary" />
             </div>
           )}
           {title}
