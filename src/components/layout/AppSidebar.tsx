@@ -11,6 +11,7 @@ import {
   Database,
   Heart } from
 'lucide-react';
+import logoIgreja from '@/assets/logo-igreja-do-amor.png';
 import { useRole } from '@/contexts/RoleContext';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -73,11 +74,8 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="border-b border-sidebar-border/50 p-5">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-primary/15 backdrop-blur-sm">
-            <Heart className="h-5 w-5 text-sidebar-primary fill-sidebar-primary" />
-          </div>
+          <img src={logoIgreja} alt="Igreja do Amor" className="h-10 w-auto" />
           <div className="flex flex-col">
-            <span className="font-semibold text-sidebar-foreground text-sm">Igreja do Amor</span>
             <span className="text-[11px] text-sidebar-foreground/60 tracking-wide">Rede Amor a 2</span>
           </div>
         </div>
