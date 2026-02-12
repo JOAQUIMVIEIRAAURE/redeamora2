@@ -1,202 +1,134 @@
+## Plano: Aba Organograma + Seed de Dados
 
+### Estado Atual do Banco
 
-## Plano de Redesign - Identidade Visual "Ano da Santidade 2026"
+A estrutura de tabelas ja existe (redes, coordenacoes, supervisores, celulas, leadership_couples, profiles). Nao e necessario criar novas tabelas nem migracoes de schema.
 
-Transformacao completa do sistema para tema escuro premium com destaques em dourado, mantendo toda a estrutura funcional intacta.
+Dados atuais:
 
----
-
-### FASE 1: Design System (Paleta Escura + Dourado)
-
-**Arquivo: `src/index.css`**
-
-Substituir TODA a paleta de cores (`:root` e `.dark`) por uma unica paleta escura. O sistema nao tera mais modo claro -- sera exclusivamente escuro.
-
-Cores principais (convertidas para HSL):
-- `--background`: #0B0B0D → `240 12% 4%`
-- `--foreground`: #F5F5F5 → `0 0% 96%`
-- `--card`: #1B1E24 → `220 14% 12%`
-- `--card-foreground`: #F5F5F5
-- `--popover`: #14161B → `225 14% 10%`
-- `--primary`: #D89A3C (dourado) → `37 65% 54%`
-- `--primary-foreground`: #0B0B0D
-- `--secondary`: #14161B
-- `--secondary-foreground`: #B5B5B5 → `0 0% 71%`
-- `--muted`: #14161B
-- `--muted-foreground`: #B5B5B5
-- `--accent`: dourado com baixa opacidade → `37 30% 16%`
-- `--accent-foreground`: #D89A3C
-- `--border`: `220 10% 18%`
-- `--input`: `220 10% 18%`
-- `--ring`: #D89A3C
-- `--destructive`: vermelho discreto
-- `--success`: verde esmeralda discreto
-- `--warning`: dourado mais claro
-
-Sidebar:
-- `--sidebar-background`: `220 14% 8%`
-- `--sidebar-foreground`: #F5F5F5
-- `--sidebar-primary`: #D89A3C
-- `--sidebar-accent`: `37 30% 14%`
-- `--sidebar-border`: `220 10% 15%`
-
-Remover bloco `.dark` (nao necessario, tudo e escuro).
-
-Adicionar classes utilitarias:
-- `.glow-gold` - box-shadow dourado sutil no hover
-- `.glass-card` - atualizar para fundo escuro translucido com borda dourada/15%
-- `.card-hover:hover` - adicionar glow dourado sutil
-- `.gold-gradient` - gradiente de texto dourado para titulos de destaque
-
-**Arquivo: `tailwind.config.ts`**
-
-- Remover `darkMode: ["class"]` (nao aplicavel)
-- Manter cores `success` e `warning` atualizadas
-- Adicionar keyframe `glow-pulse` para efeito sutil em elementos destaque
+- Rede "Rede Amor a 2" existe (sem lider vinculado)
+- Coordenacoes existentes: ACELERE (Davidson), COORDECAO TESTE (Thomas & Dani), RECOMECO (Renato & Fabiana)
+- Faltam: Ilimitada, Porcao Dobrada, Consolidacao
+- Faltam profiles: Kleber, Kesia, Cassia, Paulo Vittor, Francielly, Arlam, Isabela
 
 ---
 
-### FASE 2: Componentes Base (Adaptar ao tema escuro)
+### FASE 1: Seed de Dados (SQL inserts)
 
-**Arquivo: `src/components/ui/stat-card.tsx`**
+**1.1 Criar profiles faltantes**
 
-- Background do icone: usar `bg-primary/10` (dourado translucido)
-- Icone: `text-primary` (dourado)
-- Valor: `text-foreground` (branco)
-- Label: `text-muted-foreground` (cinza claro)
-- Hover: adicionar glow dourado sutil via `card-hover`
+Inserir na tabela `profiles` (com user_id uuid gerado):
 
-**Arquivo: `src/components/ui/page-header.tsx`**
+- Kleber, Kesia, Cassia, Paulo Vittor, Francielly
 
-- Icone container: `bg-primary/10` com icone `text-primary` (dourado)
-- Titulo: branco
-- Subtitulo: `text-muted-foreground`
+**1.2 Criar leadership_couples**
 
-**Arquivo: `src/components/ui/empty-state.tsx`**
+- Kleber & Kesia (lideres da rede)
+- Davidson & Cassia (Aceleracao)
+- Paulo Vittor & Francielly (Porcao Dobrada)
+- Thomas & Dani (Consolidacao)
 
-- Icone container: `bg-muted` (escuro)
-- Borda: `border-dashed border-border`
+**1.3 Atualizar Rede**
 
-**Arquivo: `src/components/ui/data-table.tsx`**
+- Vincular leadership_couple de Kleber & Kesia na rede "Rede Amor a 2"
 
-- Header da tabela: `bg-card` com texto muted
-- Hover nas linhas: `hover:bg-primary/5` (glow dourado muito sutil)
+**1.4 Criar/Atualizar Coordenacoes**
 
-**Arquivo: `src/components/ui/card.tsx`**
-
-- Nenhuma mudanca estrutural necessaria (herda das CSS variables)
+- Renomear "ACELERE" para "Aceleração" e vincular couple Davidson & Cassia
+- Criar "Ilimitada" com couple Kleber & Kesia
+- Criar "Porção Dobrada" com couple Paulo Vittor & Francielly
+- Criar "Consolidação" com couple Arlam & Isabela
+- Manter "RECOMECO" com couple Renato & Fabiana (ja existe)
 
 ---
 
-### FASE 3: Tela Home (Selecao de Papel)
+### FASE 2: Pagina Organograma (Front-end)
 
-**Arquivo: `src/pages/Home.tsx`**
+**Novo arquivo: `src/pages/Organograma.tsx**`
 
-- Background: gradiente escuro (`from-background via-card to-background`)
-- Logo container: `bg-primary/15` com icone dourado
-- Titulo "Igreja do Amor": branco com possivel detalhe dourado
-- Subtitulo "Rede Amor a 2": `text-muted-foreground`
-- Cards de role: fundo `bg-card`, borda `border-border`, hover com glow dourado
-- Icone container no hover: `bg-primary text-primary-foreground` (dourado solido)
-- Botoes: primary dourado, outline com borda dourada
-- Rodape: texto muted
+Pagina com layout AppLayout contendo:
 
----
+- PageHeader com titulo "Organograma" e icone GitBranch
+- Filtro de busca por nome (coordenacao/supervisor/celula)
+- Arvore hierarquica renderizada com CSS puro (sem biblioteca externa)
 
-### FASE 4: Layout e Sidebar
+**Novo arquivo: `src/components/organograma/OrgTree.tsx**`
 
-**Arquivo: `src/components/layout/AppSidebar.tsx`**
+Componente principal da arvore:
 
-- Sidebar com fundo escuro profundo (via CSS variable `--sidebar-background`)
-- Logo area: icone dourado, texto branco
-- Menu items ativos: borda lateral dourada (`border-l-2 border-primary`) + fundo `bg-primary/10`
-- Items inativos: hover com `bg-sidebar-accent`
-- Footer: avatar com borda dourada sutil
-- Separadores: `border-sidebar-border`
+- No raiz: Rede (Kleber & Kesia)
+- Nivel 2: Coordenacoes (com casal coordenador)
+- Nivel 3: Supervisores (quando existirem)
+- Nivel 4: Celulas (com casal lider)
 
-**Arquivo: `src/components/layout/AppLayout.tsx`**
+Cada no e um card escuro com:
 
-- Header/topbar: fundo escuro (`bg-background/90`) com blur
-- Separador: `border-border/30`
+- Titulo do nivel (badge dourado)
+- Nome da unidade
+- Nome do casal lider
+- Contador de subordinados
+- Borda lateral dourada
 
----
+Conexoes entre nos: linhas SVG ou CSS borders
 
-### FASE 5: Dashboards
+**Novo arquivo: `src/components/organograma/OrgNode.tsx**`
 
-**Todos os dashboards** herdam automaticamente as novas cores via CSS variables. Ajustes especificos:
+Card individual do no com:
 
-**5.1 CellLeaderDashboard.tsx**
-- Cards de celula: `bg-card`, borda lateral `border-l-primary` (dourada)
-- Casal lider: texto dourado sutil
-- Busca: input escuro com borda
+- Layout compacto e premium
+- Hover com glow dourado
+- Expandir/colapsar filhos
 
-**5.2 CoordinatorDashboard.tsx**
-- Card de lideranca: borda lateral dourada
-- Badges de status: dourado para positivo, vermelho discreto para negativo
-- Tabelas: header escuro, hover dourado sutil
+**Novo arquivo: `src/hooks/useOrganograma.ts**`
 
-**5.3 SupervisorDashboard.tsx**
-- Cards de selecao: `bg-card`
-- Historico: borda `border-l-success` (realizada) ou `border-l-destructive` (nao realizada)
-- Badge "Realizada": usando cores success/destructive atualizadas
+Hook que busca todos os dados necessarios (redes, coordenacoes, supervisores, celulas) e monta a estrutura de arvore hierarquica.
 
-**5.4 NetworkLeaderDashboard.tsx**
-- StatCards: icones dourados
-- Collapsible: borda lateral dourada
-- Tabs: estilo escuro com indicador dourado
+**Responsividade:**
 
-**5.5 AdminDashboard.tsx**
-- Grid de stats: icones dourados
-- Tabela por Rede: badges com dourado/verde/vermelho por faixa
-- Total geral: fundo `bg-primary/10`
+- Desktop: arvore horizontal com scroll
+- Mobile: layout vertical tipo accordion (collapsible por nivel)
 
 ---
 
-### FASE 6: Central de Dados (Dados.tsx)
+### FASE 3: Rota e Navegacao
 
-- Filtros: container `bg-card`
-- KPI cards: icones dourados
-- Tabs: indicador dourado
-- Tabelas: header `bg-card`, hover `bg-primary/5`
-- Ranking Top 3: medalhas com fundo dourado (`bg-primary/10`, `bg-primary/5`)
-- Badges de milestones: cores diferenciadas em tons escuros
-- Badges de % envio: dourado para bom, vermelho para baixo
+**Arquivo: `src/App.tsx**`
 
----
+- Adicionar rota `/organograma` com RoleProtectedRoute
 
-### FASE 7: Modal de Relatorio (CelulaDetailsDialog.tsx)
+**Arquivo: `src/components/layout/AppSidebar.tsx**`
 
-- Dialog: fundo `bg-popover` (escuro)
-- Tabs: indicador dourado
-- Inputs: fundo escuro com borda `border-input`
-- Botao enviar: dourado solido `bg-primary`
+- Adicionar item "Organograma" no menu principal (icone GitBranch)
+- Visivel para todos os papeis
 
 ---
 
-### Resumo Tecnico
+### FASE 4: Permissoes de Visibilidade
 
-| Item | Arquivos Editados |
-|------|-------------------|
-| Design System | 2 (index.css, tailwind.config.ts) |
-| Componentes Base | 4 (stat-card, page-header, empty-state, data-table) |
-| Tela Home | 1 |
-| Layout/Sidebar | 2 |
-| Dashboards (5) | 5 |
-| Central de Dados | 1 |
-| Modal Relatorio | 1 |
-| **Total** | **16 arquivos editados** |
+O organograma respeita as regras existentes:
 
-**0 arquivos novos. 0 migracoes de banco.**
+- Admin e Lider de Rede: veem tudo
+- Coordenador: ve apenas sua coordenacao e abaixo
+- Supervisor: ve apenas sua supervisao e abaixo
+- Lider de Celula: ve apenas sua celula
 
-A maior parte da transformacao acontece em `src/index.css` (paleta de cores). Os demais arquivos recebem ajustes pontuais de classes para garantir que icones, bordas e destaques usem a cor dourada (`text-primary`, `border-l-primary`, `bg-primary/10`).
+A filtragem sera feita no front-end com base no `selectedRole` do RoleContext (mesmo padrao do sistema atual).
 
-### Ordem de implementacao
+---
 
-1. Design System (index.css + tailwind.config.ts) -- transforma tudo de uma vez
-2. Componentes base (ajustes de classes para dourado)
-3. Layout e Sidebar
-4. Home
-5. Dashboards
-6. Central de Dados
-7. Modal de Relatorio
+### Resumo de Arquivos
 
+
+| Arquivo                                  | Acao                         |
+| ---------------------------------------- | ---------------------------- |
+| `src/pages/Organograma.tsx`              | Novo                         |
+| `src/components/organograma/OrgTree.tsx` | Novo                         |
+| `src/components/organograma/OrgNode.tsx` | Novo                         |
+| `src/hooks/useOrganograma.ts`            | Novo                         |
+| `src/App.tsx`                            | Editar (adicionar rota)      |
+| `src/components/layout/AppSidebar.tsx`   | Editar (adicionar menu item) |
+
+
+**Seed:** Insercoes via ferramenta de dados (profiles, leadership_couples, coordenacoes, atualizacao da rede).
+
+**0 migracoes de schema** (tabelas ja existem).
