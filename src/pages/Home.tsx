@@ -4,6 +4,7 @@ import { useRole } from '@/contexts/RoleContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Home as HomeIcon, FolderTree, Network, Shield, ClipboardCheck, Lock, Heart } from 'lucide-react';
+import logoAnoSantidade from '@/assets/logo-ano-santidade.png';
 import { AccessCodeDialog } from '@/components/access/AccessCodeDialog';
 import { ACCESS_CODES, requiresAccessCode, type RoleType } from '@/config/accessCodes';
 
@@ -81,14 +82,9 @@ export default function HomePage() {
       <div className="w-full max-w-4xl animate-fade-in">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-5">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary shadow-lg shadow-primary/25 glow-gold">
-              <Heart className="h-8 w-8 text-primary-foreground fill-primary-foreground" />
-            </div>
+            <img src={logoAnoSantidade} alt="Igreja do Amor – Ano da Santidade 2026" className="h-32 w-auto object-contain" />
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-foreground">Igreja do Amor</h1>
-          <p className="text-muted-foreground mt-1 text-lg tracking-wide">Rede Amor a 2
-
-          </p>
+          <p className="text-muted-foreground mt-1 text-lg tracking-wide">Rede Amor a 2</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
