@@ -84,7 +84,7 @@ export default function HomePage() {
           <div className="flex justify-center mb-5">
             <img src={logoAnoSantidade} alt="Igreja do Amor – Ano da Santidade 2026" className="h-32 w-auto object-contain" />
           </div>
-          <p className="text-muted-foreground mt-1 text-lg tracking-wide">REDE AMOR A 2</p>
+          <p className="text-muted-foreground mt-1 text-lg tracking-wide">REDE AMOR A 2 💖 👩‍❤️‍👨 </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
