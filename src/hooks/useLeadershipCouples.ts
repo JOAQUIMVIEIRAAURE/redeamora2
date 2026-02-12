@@ -136,5 +136,5 @@ export function getCoupleDisplayName(couple?: LeadershipCouple | null): string {
   if (!couple) return '';
   const name1 = couple.spouse1?.name || 'Cônjuge 1';
   const name2 = couple.spouse2?.name || 'Cônjuge 2';
-  return `${name1} e ${name2}`;
+  return `${name1} & ${name2}`;
 }

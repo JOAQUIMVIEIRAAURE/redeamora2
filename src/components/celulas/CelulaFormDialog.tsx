@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,12 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateCelula, useUpdateCelula, Celula } from '@/hooks/useCelulas';
 import { useCoordenacoes } from '@/hooks/useCoordenacoes';
-import { LeadershipCoupleSelect } from '@/components/leadership/LeadershipCoupleSelect';
+import { InlineCoupleFields } from '@/components/leadership/InlineCoupleFields';
+import { useCreateCoupleFromNames } from '@/hooks/useCreateCoupleFromNames';
+import { Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   coordenacao_id: z.string().min(1, 'Coordenação é obrigatória'),
-  leadership_couple_id: z.string().optional().nullable(),
+  spouse1_name: z.string().min(1, 'Nome do esposo é obrigatório'),
+  spouse2_name: z.string().min(1, 'Nome da esposa é obrigatório'),
   address: z.string().optional(),
   meeting_day: z.string().optional(),
   meeting_time: z.string().optional(),
@@ -42,13 +45,16 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
   const { data: coordenacoes } = useCoordenacoes();
   const createCelula = useCreateCelula();
   const updateCelula = useUpdateCelula();
+  const { createOrUpdateCouple } = useCreateCoupleFromNames();
+  const [submitting, setSubmitting] = useState(false);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: celula?.name || '',
       coordenacao_id: celula?.coordenacao_id || '',
-      leadership_couple_id: celula?.leadership_couple_id || null,
+      spouse1_name: celula?.leadership_couple?.spouse1?.name || '',
+      spouse2_name: celula?.leadership_couple?.spouse2?.name || '',
       address: celula?.address || '',
       meeting_day: celula?.meeting_day || '',
       meeting_time: celula?.meeting_time || '',
@@ -57,10 +63,17 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
   
   async function onSubmit(data: FormData) {
     try {
+      setSubmitting(true);
+      const coupleId = await createOrUpdateCouple(
+        data.spouse1_name,
+        data.spouse2_name,
+        celula?.leadership_couple_id
+      );
+      
       const payload = {
         name: data.name,
         coordenacao_id: data.coordenacao_id,
-        leadership_couple_id: data.leadership_couple_id || null,
+        leadership_couple_id: coupleId,
         address: data.address || null,
         meeting_day: data.meeting_day || null,
         meeting_time: data.meeting_time || null,
@@ -75,6 +88,8 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
       form.reset();
     } catch (error) {
       // Error is handled by the mutation
+    } finally {
+      setSubmitting(false);
     }
   }
   
@@ -126,20 +141,9 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="leadership_couple_id"
-              render={({ field }) => (
-                <FormItem>
-                  <LeadershipCoupleSelect
-                    value={field.value}
-                    onChange={field.onChange}
-                    label="Líderes da Célula (Casal)"
-                    placeholder="Selecione o casal líder"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
+            <InlineCoupleFields
+              form={form}
+              label="Líderes da Célula (Casal)"
             />
             
             <FormField
@@ -201,7 +205,8 @@ export function CelulaFormDialog({ open, onOpenChange, celula }: CelulaFormDialo
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createCelula.isPending || updateCelula.isPending}>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {celula ? 'Salvar' : 'Criar'}
               </Button>
             </div>

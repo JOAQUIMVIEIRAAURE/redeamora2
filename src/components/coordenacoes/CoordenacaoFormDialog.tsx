@@ -8,12 +8,16 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateCoordenacao, useUpdateCoordenacao, Coordenacao } from '@/hooks/useCoordenacoes';
 import { useRedes } from '@/hooks/useRedes';
-import { LeadershipCoupleSelect } from '@/components/leadership/LeadershipCoupleSelect';
+import { InlineCoupleFields } from '@/components/leadership/InlineCoupleFields';
+import { useCreateCoupleFromNames } from '@/hooks/useCreateCoupleFromNames';
+import { Loader2 } from 'lucide-react';
+import { useState } from 'react';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   rede_id: z.string().min(1, 'Rede é obrigatória'),
-  leadership_couple_id: z.string().optional().nullable(),
+  spouse1_name: z.string().min(1, 'Nome do esposo é obrigatório'),
+  spouse2_name: z.string().min(1, 'Nome da esposa é obrigatório'),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -28,22 +32,32 @@ export function CoordenacaoFormDialog({ open, onOpenChange, coordenacao }: Coord
   const { data: redes } = useRedes();
   const createCoordenacao = useCreateCoordenacao();
   const updateCoordenacao = useUpdateCoordenacao();
+  const { createOrUpdateCouple } = useCreateCoupleFromNames();
+  const [submitting, setSubmitting] = useState(false);
   
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: coordenacao?.name || '',
       rede_id: coordenacao?.rede_id || '',
-      leadership_couple_id: coordenacao?.leadership_couple_id || null,
+      spouse1_name: coordenacao?.leadership_couple?.spouse1?.name || '',
+      spouse2_name: coordenacao?.leadership_couple?.spouse2?.name || '',
     },
   });
   
   async function onSubmit(data: FormData) {
     try {
+      setSubmitting(true);
+      const coupleId = await createOrUpdateCouple(
+        data.spouse1_name,
+        data.spouse2_name,
+        coordenacao?.leadership_couple_id
+      );
+      
       const payload = {
         name: data.name,
         rede_id: data.rede_id,
-        leadership_couple_id: data.leadership_couple_id || null,
+        leadership_couple_id: coupleId,
       };
       
       if (coordenacao) {
@@ -55,6 +69,8 @@ export function CoordenacaoFormDialog({ open, onOpenChange, coordenacao }: Coord
       form.reset();
     } catch (error) {
       // Error is handled by the mutation
+    } finally {
+      setSubmitting(false);
     }
   }
   
@@ -106,27 +122,17 @@ export function CoordenacaoFormDialog({ open, onOpenChange, coordenacao }: Coord
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="leadership_couple_id"
-              render={({ field }) => (
-                <FormItem>
-                  <LeadershipCoupleSelect
-                    value={field.value}
-                    onChange={field.onChange}
-                    label="Coordenadores (Casal)"
-                    placeholder="Selecione o casal coordenador"
-                  />
-                  <FormMessage />
-                </FormItem>
-              )}
+            <InlineCoupleFields
+              form={form}
+              label="Coordenadores (Casal)"
             />
             
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={createCoordenacao.isPending || updateCoordenacao.isPending}>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {coordenacao ? 'Salvar' : 'Criar'}
               </Button>
             </div>
