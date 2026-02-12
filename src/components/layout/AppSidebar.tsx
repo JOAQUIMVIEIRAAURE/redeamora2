@@ -74,7 +74,7 @@ export function AppSidebar() {
       <SidebarHeader className="border-b border-sidebar-border/50 p-5">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-primary/15 backdrop-blur-sm">
-            <Heart className="h-5 w-5 text-sidebar-foreground fill-sidebar-foreground" />
+            <Heart className="h-5 w-5 text-sidebar-primary fill-sidebar-primary" />
           </div>
           <div className="flex flex-col">
             <span className="font-semibold text-sidebar-foreground text-sm">Igreja do Amor</span>

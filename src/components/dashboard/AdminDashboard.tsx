@@ -187,7 +187,7 @@ export function AdminDashboard() {
                           </TableRow>
                         );
                       })}
-                      <TableRow className="bg-muted/50 font-bold border-t-2">
+                      <TableRow className="bg-primary/10 font-bold border-t-2">
                         <TableCell>TOTAL GERAL</TableCell>
                         <TableCell></TableCell>
                         <TableCell className="text-center"><Badge variant="outline">{coordenacoes?.length || 0}</Badge></TableCell>
