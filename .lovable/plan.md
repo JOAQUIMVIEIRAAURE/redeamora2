@@ -1,63 +1,90 @@
 
 
-## Plano de Redesign UI/UX - Igreja do Amor / Rede Amoradores
+## Plano de Redesign - Identidade Visual "Ano da Santidade 2026"
 
-O sistema ja usa Tailwind CSS + shadcn/ui (Radix). O redesign sera feito ajustando o Design System (CSS variables), refinando componentes existentes e aplicando melhorias consistentes em todas as telas prioritarias, sem quebrar funcionalidades.
+Transformacao completa do sistema para tema escuro premium com destaques em dourado, mantendo toda a estrutura funcional intacta.
 
 ---
 
-### FASE 1: Design System (Fundacao Visual)
+### FASE 1: Design System (Paleta Escura + Dourado)
 
 **Arquivo: `src/index.css`**
 
-Atualizar as CSS variables para uma paleta mais sofisticada:
-- Manter vermelho como primary, porem com tom mais elegante (menos saturado, mais quente)
-- Adicionar variavel `--success` (verde suave para badges positivos)
-- Adicionar variavel `--warning` (amarelo para alertas)
-- Aumentar `--radius` para `0.75rem` (bordas mais suaves)
-- Ajustar `--card` para um tom levemente diferente do background (profundidade sutil)
-- Sombra padrao nos cards via classe utilitaria
-- Sidebar com gradiente sutil ao inves de cor solida
+Substituir TODA a paleta de cores (`:root` e `.dark`) por uma unica paleta escura. O sistema nao tera mais modo claro -- sera exclusivamente escuro.
 
-Adicionar classes utilitarias globais:
-- `.card-hover` - transicao suave de shadow + translate
-- `.glass-card` - efeito glassmorphism sutil para cards de destaque
-- Tipografia: garantir `font-smoothing` e line-height confortavel
+Cores principais (convertidas para HSL):
+- `--background`: #0B0B0D → `240 12% 4%`
+- `--foreground`: #F5F5F5 → `0 0% 96%`
+- `--card`: #1B1E24 → `220 14% 12%`
+- `--card-foreground`: #F5F5F5
+- `--popover`: #14161B → `225 14% 10%`
+- `--primary`: #D89A3C (dourado) → `37 65% 54%`
+- `--primary-foreground`: #0B0B0D
+- `--secondary`: #14161B
+- `--secondary-foreground`: #B5B5B5 → `0 0% 71%`
+- `--muted`: #14161B
+- `--muted-foreground`: #B5B5B5
+- `--accent`: dourado com baixa opacidade → `37 30% 16%`
+- `--accent-foreground`: #D89A3C
+- `--border`: `220 10% 18%`
+- `--input`: `220 10% 18%`
+- `--ring`: #D89A3C
+- `--destructive`: vermelho discreto
+- `--success`: verde esmeralda discreto
+- `--warning`: dourado mais claro
+
+Sidebar:
+- `--sidebar-background`: `220 14% 8%`
+- `--sidebar-foreground`: #F5F5F5
+- `--sidebar-primary`: #D89A3C
+- `--sidebar-accent`: `37 30% 14%`
+- `--sidebar-border`: `220 10% 15%`
+
+Remover bloco `.dark` (nao necessario, tudo e escuro).
+
+Adicionar classes utilitarias:
+- `.glow-gold` - box-shadow dourado sutil no hover
+- `.glass-card` - atualizar para fundo escuro translucido com borda dourada/15%
+- `.card-hover:hover` - adicionar glow dourado sutil
+- `.gold-gradient` - gradiente de texto dourado para titulos de destaque
 
 **Arquivo: `tailwind.config.ts`**
-- Adicionar cores `success` e `warning` no extend
-- Adicionar keyframe `fade-in` para transicoes suaves
+
+- Remover `darkMode: ["class"]` (nao aplicavel)
+- Manter cores `success` e `warning` atualizadas
+- Adicionar keyframe `glow-pulse` para efeito sutil em elementos destaque
 
 ---
 
-### FASE 2: Componentes Base (Reutilizaveis)
+### FASE 2: Componentes Base (Adaptar ao tema escuro)
 
-**Novo arquivo: `src/components/ui/stat-card.tsx`**
+**Arquivo: `src/components/ui/stat-card.tsx`**
 
-Card padronizado para KPIs usado em TODOS os dashboards. Props: `icon`, `label`, `value`, `subtitle`, `trend` (opcional). Layout:
-- Icone em circulo com background accent suave
-- Valor grande e bold
-- Label em muted pequeno
-- Trend badge opcional (verde/vermelho)
+- Background do icone: usar `bg-primary/10` (dourado translucido)
+- Icone: `text-primary` (dourado)
+- Valor: `text-foreground` (branco)
+- Label: `text-muted-foreground` (cinza claro)
+- Hover: adicionar glow dourado sutil via `card-hover`
 
-**Novo arquivo: `src/components/ui/page-header.tsx`**
+**Arquivo: `src/components/ui/page-header.tsx`**
 
-Header de pagina padronizado. Props: `title`, `subtitle`, `icon`, `actions` (ReactNode). Layout:
-- Titulo H1 com icone
-- Subtitulo muted
-- Acoes alinhadas a direita
-- Separador visual sutil abaixo
+- Icone container: `bg-primary/10` com icone `text-primary` (dourado)
+- Titulo: branco
+- Subtitulo: `text-muted-foreground`
 
-**Novo arquivo: `src/components/ui/empty-state.tsx`**
+**Arquivo: `src/components/ui/empty-state.tsx`**
 
-Estado vazio padronizado. Props: `icon`, `title`, `description`, `action` (botao opcional). Layout:
-- Icone grande, muted, centralizado
-- Texto acolhedor
-- CTA sugerido
+- Icone container: `bg-muted` (escuro)
+- Borda: `border-dashed border-border`
 
-**Novo arquivo: `src/components/ui/data-table.tsx`**
+**Arquivo: `src/components/ui/data-table.tsx`**
 
-Wrapper para tabelas com: cabecalho sticky, hover nas linhas, bordas arredondadas no container, e estado vazio integrado.
+- Header da tabela: `bg-card` com texto muted
+- Hover nas linhas: `hover:bg-primary/5` (glow dourado muito sutil)
+
+**Arquivo: `src/components/ui/card.tsx`**
+
+- Nenhuma mudanca estrutural necessaria (herda das CSS variables)
 
 ---
 
@@ -65,12 +92,14 @@ Wrapper para tabelas com: cabecalho sticky, hover nas linhas, bordas arredondada
 
 **Arquivo: `src/pages/Home.tsx`**
 
-- Atualizar nome para "Igreja do Amor - Rede Amoradores"
-- Substituir emoji por icone SVG de coracao estilizado
-- Cards com efeito hover mais premium (shadow-lg + scale sutil)
-- Gradiente de fundo mais refinado (de rose-50 para warm-gray)
-- Botoes com estilo consistente (remover classes hardcoded de cor, usar variants)
-- Tipografia: titulo maior (text-4xl), subtitulo com tracking mais aberto
+- Background: gradiente escuro (`from-background via-card to-background`)
+- Logo container: `bg-primary/15` com icone dourado
+- Titulo "Igreja do Amor": branco com possivel detalhe dourado
+- Subtitulo "Rede Amor a 2": `text-muted-foreground`
+- Cards de role: fundo `bg-card`, borda `border-border`, hover com glow dourado
+- Icone container no hover: `bg-primary text-primary-foreground` (dourado solido)
+- Botoes: primary dourado, outline com borda dourada
+- Rodape: texto muted
 
 ---
 
@@ -78,110 +107,96 @@ Wrapper para tabelas com: cabecalho sticky, hover nas linhas, bordas arredondada
 
 **Arquivo: `src/components/layout/AppSidebar.tsx`**
 
-- Sidebar com background gradiente (em vez de cor solida)
-- Logo area com separador mais elegante
-- Items do menu com border-radius maior e padding mais generoso
-- Estado ativo com indicador lateral (barra vertical colorida)
-- Footer com design mais clean
-- Melhorar tap targets no mobile (min 44px)
+- Sidebar com fundo escuro profundo (via CSS variable `--sidebar-background`)
+- Logo area: icone dourado, texto branco
+- Menu items ativos: borda lateral dourada (`border-l-2 border-primary`) + fundo `bg-primary/10`
+- Items inativos: hover com `bg-sidebar-accent`
+- Footer: avatar com borda dourada sutil
+- Separadores: `border-sidebar-border`
 
 **Arquivo: `src/components/layout/AppLayout.tsx`**
 
-- Header mais clean com shadow sutil ao scroll
-- Melhorar espacamento do main content (padding responsivo)
+- Header/topbar: fundo escuro (`bg-background/90`) com blur
+- Separador: `border-border/30`
 
 ---
 
-### FASE 5: Dashboards (Telas Prioritarias)
+### FASE 5: Dashboards
 
-**5.1 Dashboard Lider de Celula (`CellLeaderDashboard.tsx`)**
-- Usar componente `PageHeader` no topo
-- Cards de celula com design premium: borda lateral colorida, hover mais suave, informacoes do casal lider com Avatar pequeno
-- Empty state com componente `EmptyState`
-- Barra de busca com estilo mais refinado (background sutil, icone integrado)
+**Todos os dashboards** herdam automaticamente as novas cores via CSS variables. Ajustes especificos:
 
-**5.2 Dashboard Coordenador (`CoordinatorDashboard.tsx`)**
-- Usar `PageHeader` e `StatCard` para KPIs
-- Card de lideranca com layout horizontal mais elegante (Avatar maior, badge de role)
-- Tabela de celulas usando `DataTable` wrapper
-- Tabs com estilo mais clean (sem borda pesada)
-- Melhorar espacamento entre secoes
+**5.1 CellLeaderDashboard.tsx**
+- Cards de celula: `bg-card`, borda lateral `border-l-primary` (dourada)
+- Casal lider: texto dourado sutil
+- Busca: input escuro com borda
 
-**5.3 Dashboard Supervisor (`SupervisorDashboard.tsx`)**
-- Usar `PageHeader` e selectors com design mais limpo
-- Cards de selecao (Coordenacao/Supervisor) com icone no header
-- Historico de supervisoes: cards com borda lateral de status (verde=realizada, vermelho=nao)
-- Empty states padronizados
-- Botao "Nova Supervisao" mais proeminente
+**5.2 CoordinatorDashboard.tsx**
+- Card de lideranca: borda lateral dourada
+- Badges de status: dourado para positivo, vermelho discreto para negativo
+- Tabelas: header escuro, hover dourado sutil
 
-**5.4 Dashboard Lider de Rede (`NetworkLeaderDashboard.tsx`)**
-- Usar `PageHeader` e `StatCard`
-- Card de lideranca com design premium
-- Collapsible de coordenacoes com animacao mais suave
-- Tabelas internas com design mais clean
-- Tabs com icones mais discretos
+**5.3 SupervisorDashboard.tsx**
+- Cards de selecao: `bg-card`
+- Historico: borda `border-l-success` (realizada) ou `border-l-destructive` (nao realizada)
+- Badge "Realizada": usando cores success/destructive atualizadas
 
-**5.5 Dashboard Admin (`AdminDashboard.tsx`)**
-- Usar `PageHeader` e `StatCard` para KPIs
-- Grid de stats com layout 5 colunas mais equilibrado
-- Tabela por Rede com design premium (hover, badges coloridos por faixa de %)
+**5.4 NetworkLeaderDashboard.tsx**
+- StatCards: icones dourados
+- Collapsible: borda lateral dourada
+- Tabs: estilo escuro com indicador dourado
+
+**5.5 AdminDashboard.tsx**
+- Grid de stats: icones dourados
+- Tabela por Rede: badges com dourado/verde/vermelho por faixa
+- Total geral: fundo `bg-primary/10`
 
 ---
 
-### FASE 6: Central de Dados (`Dados.tsx`)
+### FASE 6: Central de Dados (Dados.tsx)
 
-- Usar `PageHeader` com titulo "Central de Dados" e icone
-- Filtros em container com background card, bordas suaves, layout mais limpo
-- KPI cards usando `StatCard`
-- Tabs com design clean e responsivo
-- Tabelas com `DataTable` wrapper
-- Ranking: medalhas visuais (ouro/prata/bronze) nos 3 primeiros
-- Badges de milestones com cores diferenciadas
-- Melhorar espacamento e alinhamento geral
+- Filtros: container `bg-card`
+- KPI cards: icones dourados
+- Tabs: indicador dourado
+- Tabelas: header `bg-card`, hover `bg-primary/5`
+- Ranking Top 3: medalhas com fundo dourado (`bg-primary/10`, `bg-primary/5`)
+- Badges de milestones: cores diferenciadas em tons escuros
+- Badges de % envio: dourado para bom, vermelho para baixo
 
 ---
 
-### FASE 7: Modal de Relatorio (`CelulaDetailsDialog.tsx`)
+### FASE 7: Modal de Relatorio (CelulaDetailsDialog.tsx)
 
-- Tabs com design mais limpo dentro do modal
-- Formulario com blocos visuais separados (secao Presenca, secao Observacoes)
-- Inputs com labels mais claras e spacing uniforme
-- Botao "Enviar Relatorio" com destaque visual (primary, full-width, com icone)
-- Manter fix de overflow-y-auto
+- Dialog: fundo `bg-popover` (escuro)
+- Tabs: indicador dourado
+- Inputs: fundo escuro com borda `border-input`
+- Botao enviar: dourado solido `bg-primary`
 
 ---
 
 ### Resumo Tecnico
 
-| Item | Arquivos Novos | Arquivos Editados |
-|------|---------------|-------------------|
-| Design System | 0 | 2 (index.css, tailwind.config.ts) |
-| Componentes Base | 4 | 0 |
-| Tela Home | 0 | 1 |
-| Layout/Sidebar | 0 | 2 |
-| Dashboards (5) | 0 | 5 |
-| Central de Dados | 0 | 1 |
-| Modal Relatorio | 0 | 1 |
-| **Total** | **4 novos** | **12 editados** |
+| Item | Arquivos Editados |
+|------|-------------------|
+| Design System | 2 (index.css, tailwind.config.ts) |
+| Componentes Base | 4 (stat-card, page-header, empty-state, data-table) |
+| Tela Home | 1 |
+| Layout/Sidebar | 2 |
+| Dashboards (5) | 5 |
+| Central de Dados | 1 |
+| Modal Relatorio | 1 |
+| **Total** | **16 arquivos editados** |
 
-**Nenhuma migracao de banco de dados necessaria.**
+**0 arquivos novos. 0 migracoes de banco.**
 
-### Principios aplicados em todas as mudancas
-
-- Espacamento baseado em grid de 8px
-- Transicoes suaves (150-250ms) em hovers e expansoes
-- Skeleton loading onde aplicavel
-- Contraste WCAG AA garantido
-- Tap targets minimos de 44px no mobile
-- Remocao de `src/App.css` (nao utilizado pelo sistema)
+A maior parte da transformacao acontece em `src/index.css` (paleta de cores). Os demais arquivos recebem ajustes pontuais de classes para garantir que icones, bordas e destaques usem a cor dourada (`text-primary`, `border-l-primary`, `bg-primary/10`).
 
 ### Ordem de implementacao
 
-1. Design System (CSS + Tailwind config)
-2. Componentes base (StatCard, PageHeader, EmptyState, DataTable)
+1. Design System (index.css + tailwind.config.ts) -- transforma tudo de uma vez
+2. Componentes base (ajustes de classes para dourado)
 3. Layout e Sidebar
 4. Home
-5. Dashboards (todos)
+5. Dashboards
 6. Central de Dados
 7. Modal de Relatorio
 
