@@ -84,17 +84,17 @@ export default function HomePage() {
           <div className="flex justify-center mb-5">
             <img src={logoAnoSantidade} alt="Igreja do Amor – Ano da Santidade 2026" className="h-32 w-auto object-contain" />
           </div>
-          <p className="text-muted-foreground mt-1 text-lg tracking-wide">Rede Amor a 2</p>
+          <p className="text-muted-foreground mt-1 text-lg tracking-wide">REDE AMOR A 2</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {roleOptions.map((option) => {const IconComponent = option.icon;const needsCode = requiresAccessCode(option.role);
 
-              return (
-                <Card
-                  key={option.role}
-                  className="cursor-pointer card-hover group"
-                  onClick={() => handleRoleSelect(option.role)}>
+            return (
+              <Card
+                key={option.role}
+                className="cursor-pointer card-hover group"
+                onClick={() => handleRoleSelect(option.role)}>
 
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
@@ -104,8 +104,8 @@ export default function HomePage() {
                     <div className="flex items-center gap-2 flex-1">
                       <CardTitle className="text-lg">{option.title}</CardTitle>
                       {needsCode &&
-                        <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-label="Requer código de acesso" />
-                        }
+                      <Lock className="h-3.5 w-3.5 text-muted-foreground" aria-label="Requer código de acesso" />
+                      }
                     </div>
                   </div>
                 </CardHeader>
@@ -114,26 +114,26 @@ export default function HomePage() {
                     {option.description}
                   </CardDescription>
                   <Button
-                      variant={needsCode ? "outline" : "default"}
-                      className="w-full mt-4"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRoleSelect(option.role);
-                      }}>
+                    variant={needsCode ? "outline" : "default"}
+                    className="w-full mt-4"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRoleSelect(option.role);
+                    }}>
 
                     {needsCode ?
-                      <span className="flex items-center gap-2">
+                    <span className="flex items-center gap-2">
                         <Lock className="h-3.5 w-3.5" />
                         Acessar
                       </span> :
 
-                      'Acessar'
-                      }
+                    'Acessar'
+                    }
                   </Button>
                 </CardContent>
               </Card>);
 
-            })}
+          })}
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-8">
